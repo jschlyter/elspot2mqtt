@@ -1,11 +1,11 @@
 """Elspot to MQTT bridge"""
 
 import argparse
-import calendar
 import json
 import logging
 import math
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from statistics import mean
@@ -19,6 +19,7 @@ CURRENCY = "SEK"
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 
 TIMEZONE = None
+MAX_WINDOW = 5
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
 
@@ -63,9 +64,11 @@ class PricesDatabase(object):
             f"CREATE TABLE IF NOT EXISTS {self.table} (timestamp INTEGER PRIMARY KEY, value REAL);"
         )
 
-    def get_prices(self, d: date):
-        d1 = datetime.fromisoformat(d.isoformat()).astimezone(tz=TIMEZONE)
-        t1 = calendar.timegm(d1.utctimetuple())
+    def get(self, d: date):
+        dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
+            tz=TIMEZONE
+        )
+        t1 = int(time.mktime(dt.timetuple()))
         t2 = t1 + 86400
         cur = self.conn.cursor()
         cur.execute(
@@ -79,13 +82,23 @@ class PricesDatabase(object):
             datetime.fromtimestamp(r[0]).astimezone(tz=TIMEZONE): r[1] for r in rows
         }
 
-    def store_prices(self, prices):
+    def store(self, prices):
         cur = self.conn.cursor()
         for dt, v in prices.items():
-            ts = calendar.timegm(dt.utctimetuple())
+            ts = int(time.mktime(dt.timetuple()))
             cur.execute(
                 f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (ts, v)
             )
+        self.conn.commit()
+
+    def prune(self, days_retention=7):
+        d = date.today() - timedelta(days=days_retention)
+        dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
+            tz=TIMEZONE
+        )
+        t = int(time.mktime(dt.timetuple()))
+        cur = self.conn.cursor()
+        cur.execute(f"DELETE FROM {self.table} WHERE timestamp<?", (t,))
         self.conn.commit()
 
 
@@ -176,20 +189,21 @@ def main():
         config = json.load(config_file)
 
     db = PricesDatabase(config["database"])
+    db.prune(MAX_WINDOW)
 
     prices = {}
-    for offset in range(-5, 2):
+    for offset in range(-MAX_WINDOW, 2):
         if offset == 1 and datetime.now().hour < 13:
             logger.debug("Tomorrows prices not yet available")
             continue
         end_date = date.today() + timedelta(days=offset)
         logger.debug("Processing %s, offset=%d", end_date, offset)
-        p = db.get_prices(end_date)
+        p = db.get(end_date)
         if p is None:
             logger.debug("Fetching data for %s from Nordpool", end_date)
             try:
-                p = get_prices_nordpool(end_date=end_date, area=config["AREA"])
-                db.store_prices(p)
+                p = get_prices_nordpool(end_date=end_date, area=config["area"])
+                db.store(p)
             except ValueError:
                 pass
         else:
