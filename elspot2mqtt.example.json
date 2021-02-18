@@ -1,4 +1,5 @@
 {
+	"cache_ttl": 3600,
 	"mqtt": {
 		"host": "127.0.0.1",
 		"client_id": "elspot",

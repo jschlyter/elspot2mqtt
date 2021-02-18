@@ -21,7 +21,7 @@ CONFIG_FILENAME = "elspot2mqtt.json"
 CACHE_FILENAME = "nordpool.json"
 
 TIMEZONE = None
-MAX_CACHE_AGE = 3600
+DEFAULT_CACHE_TTL = 3600
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
 API_PAGE_WEEKHOURLY = 29
@@ -85,9 +85,9 @@ def get_prices() -> {}:
     return prices
 
 
-def get_prices_cached(filename: str, max_age: int):
+def get_prices_cached(cache_filename: str, cache_ttl: int):
     try:
-        statinfo = os.stat(filename)
+        statinfo = os.stat(cache_filename)
         mtime = statinfo.st_mtime
         with open(CACHE_FILENAME, "rt") as data_file:
             prices = json.load(data_file)
@@ -95,9 +95,9 @@ def get_prices_cached(filename: str, max_age: int):
         prices = None
         mtime = 0
 
-    if prices is None or time.time() - mtime > max_age:
+    if prices is None or time.time() - mtime > cache_ttl:
         prices = get_prices_days()
-        with open(CACHE_FILENAME, "wt") as data_file:
+        with open(cache_filename, "wt") as data_file:
             json.dump(prices, data_file)
 
     return prices
@@ -150,12 +150,13 @@ def look_ahead(prices, pm: PriceMarkup):
 
 
 def main():
-    # prices = get_prices()
-    # prices = get_prices_days()
-    prices = get_prices_cached(CACHE_FILENAME, MAX_CACHE_AGE)
 
     with open(CONFIG_FILENAME, "rt") as config_file:
         config = json.load(config_file)
+
+    # prices = get_prices()
+    # prices = get_prices_days()
+    prices = get_prices_cached(cache_filename=CACHE_FILENAME, cache_ttl=config.get("cache_ttl", DEFAULT_CACHE_TTL))
 
     pm = PriceMarkup(
         grid=config["markup"]["grid"],
