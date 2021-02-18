@@ -1,0 +1,15 @@
+{
+	"mqtt": {
+		"host": "127.0.0.1",
+		"client_id": "elspot",
+		"topic": "nordpool/lookahead",
+		"retain": false,
+		"publish": true,
+	},
+	"markup": {
+		"grid": 25.4,
+		"cert": 2,
+		"tax": 44.5,
+		"vat_percentage": 25
+	}
+}
