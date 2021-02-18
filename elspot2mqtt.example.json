@@ -1,6 +1,7 @@
 {
 	"database": "nordpool.db",
 	"area": "SE3",
+	"avg_window_size": 120,
 	"mqtt": {
 		"host": "127.0.0.1",
 		"client_id": "elspot",

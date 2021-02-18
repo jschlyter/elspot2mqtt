@@ -103,15 +103,19 @@ def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
 
 
 def percentage_to_level(p: float) -> str:
-    if p > 20:
+    if p >= 20:
         return "VERY_EXPENSIVE"
-    elif p > 10:
+    elif p >= 10:
         return "EXPENSIVE"
+    elif p <= -20:
+        return "VERY_CHEAP"
+    elif p <= -10:
+        return "CHEAP"
     else:
         return "NORMAL"
 
 
-def look_ahead(prices, pm: PriceMarkup):
+def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
     present = datetime.now().astimezone(tz=TIMEZONE) - timedelta(hours=1)
     now_offset = 0
     res = {}
@@ -123,26 +127,27 @@ def look_ahead(prices, pm: PriceMarkup):
     for dt, cost in dt_total_prices.items():
         costs.append(cost)
 
-        if len(costs) >= 120:
-            avg120 = mean(costs[len(costs) - 120 : len(costs)])
-            relpt = round((cost / avg120 - 1) * 100, 0)
+        if dt < present:
+            continue
+
+        if len(costs) >= avg_window_size:
+            avg = mean(costs[len(costs) - avg_window_size : len(costs)])
+            relpt = round((cost / avg - 1) * 100, 0)
             level = percentage_to_level(relpt)
         else:
-            avg120 = 0
+            avg = 0
             relpt = 0
             level = None
 
-        # publish data in the future
-        if dt >= present:
-            res[f"now+{now_offset}"] = {
-                "timestamp": dt.isoformat(),
-                "energy_price": round(dt_spot_prices[dt], 2),
-                "price": round(cost, 2),
-                "avg120": round(avg120, 2),
-                "relpt": relpt,
-                "level": level,
-            }
-            now_offset += 1
+        res[f"now+{now_offset}"] = {
+            "timestamp": dt.isoformat(),
+            "energy_price": round(dt_spot_prices[dt], 2),
+            "price": round(cost, 2),
+            f"avg{avg_window_size}": round(avg, 2),
+            "relpt": relpt,
+            "level": level,
+        }
+        now_offset += 1
 
     return res
 
@@ -198,7 +203,8 @@ def main():
         vat_percentage=config["markup"]["vat_percentage"],
     )
 
-    res = look_ahead(prices, pm)
+    avg_window_size = config.get("avg_window_size", 120)
+    res = look_ahead(prices, pm, avg_window_size)
     print(json.dumps(res, indent=4))
 
     mqtt_config = MqttConfig.from_dict(config["mqtt"])
