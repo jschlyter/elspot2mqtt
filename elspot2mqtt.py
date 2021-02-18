@@ -1,5 +1,6 @@
 """Elspot to MQTT bridge"""
 
+import argparse
 import json
 import logging
 import math
@@ -17,11 +18,11 @@ from nordpool import elspot
 AREA = "SE3"
 CURRENCY = "SEK"
 
-CONFIG_FILENAME = "elspot2mqtt.json"
-CACHE_FILENAME = "nordpool.json"
+DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
+DEFAULT_CACHE_FILENAME = "nordpool.json"
+DEFAULT_CACHE_TTL = 3600
 
 TIMEZONE = None
-DEFAULT_CACHE_TTL = 3600
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
 API_PAGE_WEEKHOURLY = 29
@@ -89,7 +90,7 @@ def get_prices_cached(cache_filename: str, cache_ttl: int):
     try:
         statinfo = os.stat(cache_filename)
         mtime = statinfo.st_mtime
-        with open(CACHE_FILENAME, "rt") as data_file:
+        with open(cache_filename, "rt") as data_file:
             prices = json.load(data_file)
     except FileNotFoundError:
         prices = None
@@ -150,13 +151,34 @@ def look_ahead(prices, pm: PriceMarkup):
 
 
 def main():
+    """Main function"""
 
-    with open(CONFIG_FILENAME, "rt") as config_file:
+    parser = argparse.ArgumentParser(description="elspot2mqtt")
+    parser.add_argument(
+        "--conf",
+        dest="conf_filename",
+        default=DEFAULT_CONF_FILENAME,
+        metavar="filename",
+        help="configuration file",
+        required=False,
+    )
+    parser.add_argument(
+        "--debug", dest="debug", action="store_true", help="Print debug information"
+    )
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    with open(args.conf_filename, "rt") as config_file:
         config = json.load(config_file)
 
     # prices = get_prices()
     # prices = get_prices_days()
-    prices = get_prices_cached(cache_filename=CACHE_FILENAME, cache_ttl=config.get("cache_ttl", DEFAULT_CACHE_TTL))
+    prices = get_prices_cached(
+        cache_filename=config.get("cache_file", DEFAULT_CACHE_FILENAME),
+        cache_ttl=config.get("cache_ttl", DEFAULT_CACHE_TTL),
+    )
 
     pm = PriceMarkup(
         grid=config["markup"]["grid"],
