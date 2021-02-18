@@ -1,10 +1,12 @@
 """Elspot to MQTT bridge"""
 
 import argparse
+import calendar
 import json
 import logging
 import math
 import os
+import sqlite3
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -15,12 +17,8 @@ import paho.mqtt.client as mqtt
 from dataclasses_json import dataclass_json
 from nordpool import elspot
 
-AREA = "SE3"
 CURRENCY = "SEK"
-
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
-DEFAULT_CACHE_FILENAME = "nordpool.json"
-DEFAULT_CACHE_TTL = 3600
 
 TIMEZONE = None
 
@@ -42,6 +40,10 @@ class PriceMarkup:
         vat = c * self.vat_percentage / 100
         return c + vat + base_cost / 100
 
+    def vat_cost(self, c: float) -> float:
+        vat = c * self.vat_percentage / 100
+        return c + vat
+
 
 @dataclass_json
 @dataclass
@@ -56,51 +58,50 @@ class MqttConfig:
     publish: bool = True
 
 
-def get_prices_days(days=5) -> {}:
-    spot = elspot.Prices(currency=CURRENCY)
+class PricesDatabase(object):
+    def __init__(self, filename: str):
+        self.conn = sqlite3.connect(filename)
+        self.table = "nordpool"
+        self.conn.execute(
+            f"CREATE TABLE IF NOT EXISTS {self.table} (timestamp INTEGER PRIMARY KEY, value REAL);"
+        )
+
+    def get_prices(self, d: date):
+        d1 = datetime.fromisoformat(d.isoformat()).astimezone(tz=TIMEZONE)
+        t1 = calendar.timegm(d1.utctimetuple())
+        t2 = t1 + 86400
+        cur = self.conn.cursor()
+        cur.execute(
+            f"SELECT timestamp,value FROM {self.table} WHERE timestamp>=? and timestamp<?",
+            (t1, t2),
+        )
+        rows = cur.fetchall()
+        if len(rows) != 24:
+            return None
+        return {
+            datetime.fromtimestamp(r[0]).astimezone(tz=TIMEZONE): r[1] for r in rows
+        }
+
+    def store_prices(self, prices):
+        cur = self.conn.cursor()
+        for dt, v in prices.items():
+            ts = calendar.timegm(dt.utctimetuple())
+            cur.execute(
+                f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (ts, v)
+            )
+        self.conn.commit()
+
+
+def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
+    spot = elspot.Prices(currency=currency)
     prices = {}
-
-    for delta in range(-days, 2):
-        end_date = date.today() + timedelta(days=delta)
-        data = spot.hourly(areas=[AREA], end_date=end_date)
-        for entry in data["areas"][AREA]["values"]:
-            cost = entry["value"]
-            if math.isinf(cost):
-                continue
-            ts = entry["start"].astimezone(tz=TIMEZONE).isoformat()
-            prices[ts] = cost / 1000
-    return prices
-
-
-def get_prices() -> {}:
-    spot = elspot.Prices(currency=CURRENCY)
-    prices = {}
-    end_date = date.today() + timedelta(days=1)
-    data = spot.fetch(data_type=API_PAGE_WEEKHOURLY, areas=[AREA], end_date=end_date)
-    for entry in data["areas"][AREA]["values"]:
+    data = spot.hourly(areas=[area], end_date=end_date)
+    for entry in data["areas"][area]["values"]:
         cost = entry["value"]
         if math.isinf(cost):
-            continue
-        ts = entry["start"].astimezone(tz=TIMEZONE).isoformat()
+            raise ValueError
+        ts = entry["start"].astimezone(tz=TIMEZONE)
         prices[ts] = cost / 1000
-    return prices
-
-
-def get_prices_cached(cache_filename: str, cache_ttl: int):
-    try:
-        statinfo = os.stat(cache_filename)
-        mtime = statinfo.st_mtime
-        with open(cache_filename, "rt") as data_file:
-            prices = json.load(data_file)
-    except FileNotFoundError:
-        prices = None
-        mtime = 0
-
-    if prices is None or time.time() - mtime > cache_ttl:
-        prices = get_prices_days()
-        with open(cache_filename, "wt") as data_file:
-            json.dump(prices, data_file)
-
     return prices
 
 
@@ -118,10 +119,8 @@ def look_ahead(prices, pm: PriceMarkup):
     now_offset = 0
     res = {}
 
-    dt_prices = {datetime.fromisoformat(t): v for t, v in prices.items()}
-    dt_total_prices = {
-        datetime.fromisoformat(t): pm.total_cost(v) for t, v in prices.items()
-    }
+    dt_spot_prices = {t: pm.vat_cost(v) for t, v in prices.items()}
+    dt_total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
     for dt, cost in dt_total_prices.items():
@@ -140,7 +139,8 @@ def look_ahead(prices, pm: PriceMarkup):
         if dt >= present:
             res[f"now+{now_offset}"] = {
                 "timestamp": dt.isoformat(),
-                "cost": round(cost, 2),
+                "energy_price": round(dt_spot_prices[dt], 2),
+                "price": round(cost, 2),
                 "avg120": round(avg120, 2),
                 "relpt": relpt,
                 "level": level,
@@ -173,12 +173,26 @@ def main():
     with open(args.conf_filename, "rt") as config_file:
         config = json.load(config_file)
 
-    # prices = get_prices()
-    # prices = get_prices_days()
-    prices = get_prices_cached(
-        cache_filename=config.get("cache_file", DEFAULT_CACHE_FILENAME),
-        cache_ttl=config.get("cache_ttl", DEFAULT_CACHE_TTL),
-    )
+    db = PricesDatabase(config["database"])
+
+    prices = {}
+    for offset in range(-5, 2):
+        if offset == 1 and datetime.now().hour < 13:
+            logger.debug("Tomorrows prices not yet available")
+            continue
+        end_date = date.today() + timedelta(days=offset)
+        logger.debug("Processing %s, offset=%d", end_date, offset)
+        p = db.get_prices(end_date)
+        if p is None:
+            logger.debug("Fetching data for %s from Nordpool", end_date)
+            try:
+                p = get_prices_nordpool(end_date=end_date, area=config["AREA"])
+                db.store_prices(p)
+            except ValueError:
+                pass
+        else:
+            logger.debug("Using cached data for %s", end_date)
+        prices.update(p)
 
     pm = PriceMarkup(
         grid=config["markup"]["grid"],

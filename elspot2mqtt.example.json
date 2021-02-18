@@ -1,6 +1,6 @@
 {
-	"cache_ttl": 3600,
-	"cache_file": "prices.json",
+	"database": "nordpool.db",
+	"area": "SE3",
 	"mqtt": {
 		"host": "127.0.0.1",
 		"client_id": "elspot",
