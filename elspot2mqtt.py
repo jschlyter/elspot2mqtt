@@ -5,9 +5,7 @@ import calendar
 import json
 import logging
 import math
-import os
 import sqlite3
-import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from statistics import mean
@@ -23,7 +21,6 @@ DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 TIMEZONE = None
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
-API_PAGE_WEEKHOURLY = 29
 
 logger = logging.getLogger(__name__)
 
