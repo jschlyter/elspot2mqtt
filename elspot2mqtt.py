@@ -18,7 +18,6 @@ from nordpool import elspot
 CURRENCY = "SEK"
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 
-TIMEZONE = None
 MAX_WINDOW = 5
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
@@ -56,6 +55,14 @@ class MqttConfig:
     publish: bool = True
 
 
+def date2timestamp(d: date) -> int:
+    """Get unix timestamp of midnight of date"""
+    dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
+        tz=None
+    )
+    return int(time.mktime(dt.timetuple()))
+
+
 class PricesDatabase(object):
     def __init__(self, filename: str):
         self.conn = sqlite3.connect(filename)
@@ -65,10 +72,7 @@ class PricesDatabase(object):
         )
 
     def get(self, d: date):
-        dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
-            tz=TIMEZONE
-        )
-        t1 = int(time.mktime(dt.timetuple()))
+        t1 = date2timestamp(d)
         t2 = t1 + 86400
         cur = self.conn.cursor()
         cur.execute(
@@ -78,25 +82,19 @@ class PricesDatabase(object):
         rows = cur.fetchall()
         if len(rows) != 24:
             return None
-        return {
-            datetime.fromtimestamp(r[0]).astimezone(tz=TIMEZONE): r[1] for r in rows
-        }
+        return {r[0]: r[1] for r in rows}
 
     def store(self, prices):
         cur = self.conn.cursor()
-        for dt, v in prices.items():
-            ts = int(time.mktime(dt.timetuple()))
+        for t, v in prices.items():
             cur.execute(
-                f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (ts, v)
+                f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (t, v)
             )
         self.conn.commit()
 
     def prune(self, days_retention=7):
         d = date.today() - timedelta(days=days_retention)
-        dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
-            tz=TIMEZONE
-        )
-        t = int(time.mktime(dt.timetuple()))
+        t = date2timestamp(d)
         cur = self.conn.cursor()
         cur.execute(f"DELETE FROM {self.table} WHERE timestamp<?", (t,))
         self.conn.commit()
@@ -110,8 +108,9 @@ def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
         cost = entry["value"]
         if math.isinf(cost):
             raise ValueError
-        ts = entry["start"].astimezone(tz=TIMEZONE)
-        prices[ts] = cost / 1000
+        dt = entry["start"].astimezone(tz=None)
+        t = int(time.mktime(dt.timetuple()))
+        prices[t] = cost / 1000
     return prices
 
 
@@ -129,18 +128,20 @@ def percentage_to_level(p: float) -> str:
 
 
 def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
-    present = datetime.now().astimezone(tz=TIMEZONE) - timedelta(hours=1)
+    present = time.time() - 3600
     now_offset = 0
     res = {}
 
-    dt_spot_prices = {t: pm.vat_cost(v) for t, v in prices.items()}
-    dt_total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
+    spot_prices = {t: pm.vat_cost(v) for t, v in prices.items()}
+    total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
-    for dt, cost in dt_total_prices.items():
+    for t, cost in total_prices.items():
+        dt = datetime.fromtimestamp(t).astimezone(tz=None)
+
         costs.append(cost)
 
-        if dt < present:
+        if t < present:
             continue
 
         if len(costs) >= avg_window_size:
@@ -154,7 +155,7 @@ def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
 
         res[f"now+{now_offset}"] = {
             "timestamp": dt.isoformat(),
-            "energy_price": round(dt_spot_prices[dt], 2),
+            "energy_price": round(spot_prices[t], 2),
             "price": round(cost, 2),
             f"avg{avg_window_size}": round(avg, 2),
             "relpt": relpt,
@@ -189,14 +190,16 @@ def main():
         config = json.load(config_file)
 
     db = PricesDatabase(config["database"])
+
     db.prune(MAX_WINDOW)
+    logger.debug("Pruned prices older than %d days", MAX_WINDOW)
 
     prices = {}
     for offset in range(-MAX_WINDOW, 2):
-        if offset == 1 and datetime.now().hour < 13:
-            logger.debug("Tomorrows prices not yet available")
-            continue
         end_date = date.today() + timedelta(days=offset)
+        if offset == 1 and datetime.now().hour < 13:
+            logger.debug("Data for %s skipped until 13.00", end_date)
+            continue
         logger.debug("Processing %s, offset=%d", end_date, offset)
         p = db.get(end_date)
         if p is None:
@@ -205,6 +208,7 @@ def main():
                 p = get_prices_nordpool(end_date=end_date, area=config["area"])
                 db.store(p)
             except ValueError:
+                logger.debug("Data for %s not available", end_date)
                 pass
         else:
             logger.debug("Using cached data for %s", end_date)
