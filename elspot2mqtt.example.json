@@ -10,9 +10,9 @@
 		"publish": true
 	},
 	"costs": {
-		"markup": 1.69,
-		"grid": 25.4,
-		"energy_tax": 44.5,
+		"markup": 0.0169,
+		"grid": 0.254,
+		"energy_tax": 0.445,
 		"vat_percentage": 25
 	},
 	"levels": [
