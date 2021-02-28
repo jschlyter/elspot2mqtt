@@ -9,16 +9,23 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from statistics import mean
-from typing import Optional
+from typing import List, Optional
 
 import paho.mqtt.client as mqtt
 from dataclasses_json import dataclass_json
 from nordpool import elspot
 
 CURRENCY = "SEK"
-DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
-
 MAX_WINDOW = 5
+DEFAULT_ROUND = 3
+
+DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
+DEFAULT_LEVELS = [
+    {"gte": 10, "level": "VERY_EXPENSIVE"},
+    {"gte": 5, "level": "EXPENSIVE"},
+    {"lte": -5, "level": "CHEAP"},
+    {"lte": -10, "level": "VERY_CHEAP"},
+]
 
 elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
 
@@ -26,18 +33,20 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class PriceMarkup:
+class ExtraCosts:
+    markup: float
     grid: float
-    cert: float
-    tax: float
+    energy_tax: float
     vat_percentage: float
 
     def total_cost(self, c: float) -> float:
-        base_cost = self.grid + self.cert + self.tax
+        base_cost = self.grid + self.energy_tax
+        c = c + self.markup / 100
         vat = c * self.vat_percentage / 100
         return c + vat + base_cost / 100
 
-    def vat_cost(self, c: float) -> float:
+    def spot_cost(self, c: float) -> float:
+        c = c + self.markup / 100
         vat = c * self.vat_percentage / 100
         return c + vat
 
@@ -114,25 +123,22 @@ def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
     return prices
 
 
-def percentage_to_level(p: float) -> str:
-    if p >= 20:
-        return "VERY_EXPENSIVE"
-    elif p >= 10:
-        return "EXPENSIVE"
-    elif p <= -20:
-        return "VERY_CHEAP"
-    elif p <= -10:
-        return "CHEAP"
-    else:
-        return "NORMAL"
+def percentage_to_level(p: float, levels: List) -> str:
+    res = "NORMAL"
+    for rule in levels:
+        if "gte" in rule and p >= rule["gte"]:
+            return rule["level"]
+        elif "lte" in rule and p <= rule["lte"]:
+            res = rule["level"]
+    return res
 
 
-def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
+def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
     present = time.time() - 3600
     now_offset = 0
     res = {}
 
-    spot_prices = {t: pm.vat_cost(v) for t, v in prices.items()}
+    spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
@@ -147,7 +153,7 @@ def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
         if len(costs) >= avg_window_size:
             avg = mean(costs[len(costs) - avg_window_size : len(costs)])
             relpt = round((cost / avg - 1) * 100, 0)
-            level = percentage_to_level(relpt)
+            level = percentage_to_level(relpt, levels)
         else:
             avg = 0
             relpt = 0
@@ -155,9 +161,10 @@ def look_ahead(prices, pm: PriceMarkup, avg_window_size=120):
 
         res[f"now+{now_offset}"] = {
             "timestamp": dt.isoformat(),
-            "energy_price": round(spot_prices[t], 2),
-            "price": round(cost, 2),
-            f"avg{avg_window_size}": round(avg, 2),
+            "market_price": round(prices[t], DEFAULT_ROUND),
+            "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+            "total_price": round(total_prices[t], DEFAULT_ROUND),
+            f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
             "relpt": relpt,
             "level": level,
         }
@@ -177,6 +184,9 @@ def main():
         metavar="filename",
         help="configuration file",
         required=False,
+    )
+    parser.add_argument(
+        "--stdout", dest="stdout", action="store_true", help="Print result"
     )
     parser.add_argument(
         "--debug", dest="debug", action="store_true", help="Print debug information"
@@ -214,16 +224,22 @@ def main():
             logger.debug("Using cached data for %s", end_date)
         prices.update(p)
 
-    pm = PriceMarkup(
-        grid=config["markup"]["grid"],
-        cert=config["markup"]["cert"],
-        tax=config["markup"]["tax"],
-        vat_percentage=config["markup"]["vat_percentage"],
+    levels = config.get("levels", DEFAULT_LEVELS)
+
+    pm = ExtraCosts(
+        markup=config["costs"]["markup"],
+        grid=config["costs"]["grid"],
+        energy_tax=config["costs"]["energy_tax"],
+        vat_percentage=config["costs"]["vat_percentage"],
     )
 
     avg_window_size = config.get("avg_window_size", 120)
-    res = look_ahead(prices, pm, avg_window_size)
-    print(json.dumps(res, indent=4))
+    res = look_ahead(
+        prices=prices, pm=pm, levels=levels, avg_window_size=avg_window_size
+    )
+
+    if args.stdout:
+        print(json.dumps(res, indent=4))
 
     mqtt_config = MqttConfig.from_dict(config["mqtt"])
     if mqtt_config.publish:

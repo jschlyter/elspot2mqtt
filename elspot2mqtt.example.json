@@ -7,12 +7,30 @@
 		"client_id": "elspot",
 		"topic": "nordpool/lookahead",
 		"retain": false,
-		"publish": true,
+		"publish": true
 	},
-	"markup": {
+	"costs": {
+		"markup": 1.69,
 		"grid": 25.4,
-		"cert": 2,
-		"tax": 44.5,
+		"energy_tax": 44.5,
 		"vat_percentage": 25
-	}
+	},
+	"levels": [
+		{
+			"gte": 10,
+			"level": "VERY_EXPENSIVE"
+		},
+		{
+			"gte": 5,
+			"level": "EXPENSIVE"
+		},
+		{
+			"lte": -5,
+			"level": "CHEAP"
+		},
+		{
+			"lte": -10,
+			"level": "VERY_CHEAP"
+		}
+	]
 }
