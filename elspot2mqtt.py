@@ -17,7 +17,7 @@ from nordpool import elspot
 
 CURRENCY = "SEK"
 MAX_WINDOW = 5
-DEFAULT_ROUND = 3
+DEFAULT_ROUND = 5
 
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 DEFAULT_LEVELS = [
@@ -152,7 +152,7 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
 
         if len(costs) >= avg_window_size:
             avg = mean(costs[len(costs) - avg_window_size : len(costs)])
-            relpt = round((cost / avg - 1) * 100, 0)
+            relpt = round((cost / avg - 1) * 100, 1)
             level = percentage_to_level(relpt, levels)
         else:
             avg = 0
