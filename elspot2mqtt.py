@@ -42,7 +42,7 @@ class ExtraCosts:
     def total_cost(self, c: float) -> float:
         base_cost = self.grid + self.energy_tax
         c = c + self.markup
-        vat = c * self.vat_percentage / 100
+        vat = (c + base_cost) * self.vat_percentage / 100
         return c + vat + base_cost
 
     def spot_cost(self, c: float) -> float:
