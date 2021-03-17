@@ -241,8 +241,7 @@ def main():
     )
 
     mqtt_payload = {
-        "now": look_ahead_result[0],
-        "ahead": look_ahead_result,
+        "ahead": look_ahead_result
     }
 
     if args.stdout:
