@@ -22,6 +22,5 @@ jobs:
         poetry config virtualenvs.in-project true
     - name: Install dependencies
       run: poetry install
-    - name: Pytest
-      run: |
-        poetry run pytest --isort --black
+    - name: Run pytest
+      run: poetry run pytest --black --isort

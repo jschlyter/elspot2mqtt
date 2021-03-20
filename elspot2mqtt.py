@@ -136,7 +136,7 @@ def percentage_to_level(p: float, levels: List) -> str:
 def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
     present = time.time() - 3600
     now_offset = 0
-    res = {}
+    res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
@@ -159,15 +159,17 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
             relpt = 0
             level = None
 
-        res[f"now+{now_offset}"] = {
-            "timestamp": dt.isoformat(),
-            "market_price": round(prices[t], DEFAULT_ROUND),
-            "spot_price": round(spot_prices[t], DEFAULT_ROUND),
-            "total_price": round(total_prices[t], DEFAULT_ROUND),
-            f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
-            "relpt": relpt,
-            "level": level,
-        }
+        res.append(
+            {
+                "timestamp": dt.isoformat(),
+                "market_price": round(prices[t], DEFAULT_ROUND),
+                "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+                "total_price": round(total_prices[t], DEFAULT_ROUND),
+                f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
+                "relpt": relpt,
+                "level": level,
+            }
+        )
         now_offset += 1
 
     return res
@@ -234,12 +236,14 @@ def main():
     )
 
     avg_window_size = config.get("avg_window_size", 120)
-    res = look_ahead(
+    look_ahead_result = look_ahead(
         prices=prices, pm=pm, levels=levels, avg_window_size=avg_window_size
     )
 
+    mqtt_payload = {"ahead": look_ahead_result}
+
     if args.stdout:
-        print(json.dumps(res, indent=4))
+        print(json.dumps(mqtt_payload, indent=4))
 
     mqtt_config = MqttConfig.from_dict(config["mqtt"])
     if mqtt_config.publish:
@@ -250,7 +254,9 @@ def main():
             )
         client.connect(host=mqtt_config.host, port=mqtt_config.port)
         client.loop_start()
-        client.publish(mqtt_config.topic, json.dumps(res), retain=mqtt_config.retain)
+        client.publish(
+            mqtt_config.topic, json.dumps(mqtt_payload), retain=mqtt_config.retain
+        )
         client.loop_stop()
         client.disconnect()
 
