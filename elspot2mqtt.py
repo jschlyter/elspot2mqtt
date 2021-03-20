@@ -240,7 +240,7 @@ def main():
         prices=prices, pm=pm, levels=levels, avg_window_size=avg_window_size
     )
 
-    mqtt_payload = look_ahead_result
+    mqtt_payload = {"ahead": look_ahead_result}
 
     if args.stdout:
         print(json.dumps(mqtt_payload, indent=4))
