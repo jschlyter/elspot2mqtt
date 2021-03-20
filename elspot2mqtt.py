@@ -133,9 +133,8 @@ def percentage_to_level(p: float, levels: List) -> str:
     return res
 
 
-def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
+def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120):
     present = time.time() - 3600
-    now_offset = 0
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
@@ -170,7 +169,32 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size=120):
                 "level": level,
             }
         )
-        now_offset += 1
+
+    return res
+
+
+def look_behind(prices, pm: ExtraCosts):
+    res = []
+
+    spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
+    total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
+
+    now = datetime.now().astimezone(tz=None) - timedelta(hours=1)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    for t, cost in total_prices.items():
+        dt = datetime.fromtimestamp(t).astimezone(tz=None)
+        if dt < start or dt >= now:
+            continue
+
+        res.append(
+            {
+                "timestamp": dt.isoformat(),
+                "market_price": round(prices[t], DEFAULT_ROUND),
+                "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+                "total_price": round(total_prices[t], DEFAULT_ROUND),
+            }
+        )
 
     return res
 
@@ -239,8 +263,9 @@ def main():
     look_ahead_result = look_ahead(
         prices=prices, pm=pm, levels=levels, avg_window_size=avg_window_size
     )
+    look_behind_result = look_behind(prices=prices, pm=pm)
 
-    mqtt_payload = {"ahead": look_ahead_result}
+    mqtt_payload = {"ahead": look_ahead_result, "behind": look_behind_result}
 
     if args.stdout:
         print(json.dumps(mqtt_payload, indent=4))
