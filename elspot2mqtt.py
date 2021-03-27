@@ -89,7 +89,7 @@ class PricesDatabase(object):
             (t1, t2),
         )
         rows = cur.fetchall()
-        if len(rows) != 24:
+        if len(rows) < 23:
             return None
         return {r[0]: r[1] for r in rows}
 
@@ -114,7 +114,6 @@ def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
     prices = {}
     data = spot.hourly(areas=[area], end_date=end_date)
     for entry in data["areas"][area]["values"]:
-        print(entry)
         cost = entry["value"]
         if math.isinf(cost):
             continue
