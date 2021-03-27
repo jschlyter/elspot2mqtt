@@ -114,9 +114,10 @@ def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
     prices = {}
     data = spot.hourly(areas=[area], end_date=end_date)
     for entry in data["areas"][area]["values"]:
+        print(entry)
         cost = entry["value"]
         if math.isinf(cost):
-            raise ValueError
+            continue
         dt = entry["start"].astimezone(tz=None)
         t = int(time.mktime(dt.timetuple()))
         prices[t] = cost / 1000
@@ -199,6 +200,30 @@ def look_behind(prices, pm: ExtraCosts):
     return res
 
 
+def get_prices_database(db, area):
+    prices = {}
+    for offset in range(-MAX_WINDOW, 2):
+        end_date = date.today() + timedelta(days=offset)
+        if offset == 1 and datetime.now().hour < 13:
+            logger.debug("Data for %s skipped until 13.00", end_date)
+            continue
+        logger.debug("Processing %s, offset=%d", end_date, offset)
+        p = db.get(end_date)
+        if p is None:
+            logger.debug("Fetching data for %s from Nordpool", end_date)
+            try:
+                p = get_prices_nordpool(end_date=end_date, area=area)
+                db.store(p)
+            except ValueError:
+                logger.debug("Data for %s not available", end_date)
+                pass
+        else:
+            logger.debug("Using cached data for %s", end_date)
+        if p is not None:
+            prices.update(p)
+    return prices
+
+
 def main():
     """Main function"""
 
@@ -230,26 +255,7 @@ def main():
     db.prune(MAX_WINDOW)
     logger.debug("Pruned prices older than %d days", MAX_WINDOW)
 
-    prices = {}
-    for offset in range(-MAX_WINDOW, 2):
-        end_date = date.today() + timedelta(days=offset)
-        if offset == 1 and datetime.now().hour < 13:
-            logger.debug("Data for %s skipped until 13.00", end_date)
-            continue
-        logger.debug("Processing %s, offset=%d", end_date, offset)
-        p = db.get(end_date)
-        if p is None:
-            logger.debug("Fetching data for %s from Nordpool", end_date)
-            try:
-                p = get_prices_nordpool(end_date=end_date, area=config["area"])
-                db.store(p)
-            except ValueError:
-                logger.debug("Data for %s not available", end_date)
-                pass
-        else:
-            logger.debug("Using cached data for %s", end_date)
-        prices.update(p)
-
+    prices = get_prices_database(db=db, area=config["area"])
     levels = config.get("levels", DEFAULT_LEVELS)
 
     pm = ExtraCosts(
