@@ -211,12 +211,8 @@ def get_prices_database(db, area):
         p = db.get(end_date)
         if p is None:
             logger.debug("Fetching data for %s from Nordpool", end_date)
-            try:
-                p = get_prices_nordpool(end_date=end_date, area=area)
-                db.store(p)
-            except ValueError:
-                logger.debug("Data for %s not available", end_date)
-                pass
+            p = get_prices_nordpool(end_date=end_date, area=area)
+            db.store(p)
         else:
             logger.debug("Using cached data for %s", end_date)
         if p is not None:
