@@ -11,7 +11,9 @@ from datetime import date, datetime, timedelta
 from statistics import mean
 from typing import List, Optional
 
+import numpy as np
 import paho.mqtt.client as mqtt
+import pandas as pd
 from dataclasses_json import dataclass_json
 from nordpool import elspot
 
@@ -141,6 +143,13 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120)
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
+    pds = pd.Series(total_prices, index=total_prices.keys())
+    pdf = pd.DataFrame(pds, columns=["cost"])
+    pdf["min_cost"] = pdf.cost[
+        (pdf.cost.shift(1) > pdf.cost) & (pdf.cost.shift(-1) > pdf.cost)
+    ]
+    minimas = {k: not pd.isna(v["min_cost"]) for k, v in pdf.iterrows()}
+
     for t, cost in total_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
 
@@ -158,17 +167,18 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120)
             relpt = 0
             level = None
 
-        res.append(
-            {
-                "timestamp": dt.isoformat(),
-                "market_price": round(prices[t], DEFAULT_ROUND),
-                "spot_price": round(spot_prices[t], DEFAULT_ROUND),
-                "total_price": round(total_prices[t], DEFAULT_ROUND),
-                f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
-                "relpt": relpt,
-                "level": level,
-            }
-        )
+        r = {
+            "timestamp": dt.isoformat(),
+            "market_price": round(prices[t], DEFAULT_ROUND),
+            "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+            "total_price": round(total_prices[t], DEFAULT_ROUND),
+            f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
+            "relpt": relpt,
+            "level": level,
+            "minima": minimas.get(t, False),
+        }
+
+        res.append(r)
 
     return res
 
