@@ -4,9 +4,9 @@ import argparse
 import json
 import logging
 import math
+import os
 import sqlite3
 import time
-import os
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from statistics import mean
