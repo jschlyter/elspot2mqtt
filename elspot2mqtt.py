@@ -10,11 +10,9 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from statistics import mean
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-import numpy as np
 import paho.mqtt.client as mqtt
-import pandas as pd
 from dataclasses_json import dataclass_json
 from nordpool import elspot
 
@@ -137,6 +135,26 @@ def percentage_to_level(p: float, levels: List) -> str:
     return res
 
 
+def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
+    """Find local minimas in dataset dictionary"""
+    res = {}
+    pairs = [(t, p) for t, p in dataset.items()]
+    l = len(pairs)
+    for i in range(0, l):
+        (t, x) = pairs[i]
+        if i == 0:
+            res[t] = False
+            next
+        elif i == l - 1:
+            res[t] = False
+            next
+        else:
+            (_, a) = pairs[i - 1]
+            (_, b) = pairs[i + 1]
+            res[t] = a > x < b
+    return res
+
+
 def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120):
     present = time.time() - 3600
     res = []
@@ -145,12 +163,7 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120)
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
-    pds = pd.Series(total_prices, index=total_prices.keys())
-    pdf = pd.DataFrame(pds, columns=["cost"])
-    pdf["min_cost"] = pdf.cost[
-        (pdf.cost.shift(1) > pdf.cost) & (pdf.cost.shift(-1) > pdf.cost)
-    ]
-    minimas = {k: not pd.isna(v["min_cost"]) for k, v in pdf.iterrows()}
+    minimas = find_minimas(total_prices)
 
     for t, cost in total_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
