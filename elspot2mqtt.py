@@ -4,7 +4,6 @@ import argparse
 import json
 import logging
 import math
-import os
 import sqlite3
 import time
 from dataclasses import dataclass
@@ -20,7 +19,7 @@ CURRENCY = "SEK"
 MAX_WINDOW = 5
 DEFAULT_ROUND = 5
 
-DEFAULT_CONF_FILENAME = os.path.dirname(os.path.abspath(__file__)) + "/elspot2mqtt.json"
+DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 
 DEFAULT_LEVELS = [
     {"gte": 10, "level": "VERY_EXPENSIVE"},
