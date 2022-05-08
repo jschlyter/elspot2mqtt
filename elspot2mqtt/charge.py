@@ -38,9 +38,7 @@ def find_charge_window(
     )
 
     pdf["charge"] = pdf["datetime"].isin(
-        pdf.set_index("datetime")
-        .between_time(*window)
-        .index
+        pdf.set_index("datetime").between_time(*window).index
     )
     pdf.loc[pdf.cost <= (pdf.abs_min + threshold), "charge"] = True
 
