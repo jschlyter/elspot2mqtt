@@ -32,5 +32,10 @@
 			"lte": -10,
 			"level": "VERY_CHEAP"
 		}
-	]
+	],
+	"charge_window": {
+		"start": "00:00",
+		"end": "06:00",
+		"threshold": 0.2
+	}
 }
