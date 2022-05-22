@@ -16,6 +16,12 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
   - `market_price` -- raw elspot price
   - `spot_price` -- energy price include markup and VAT
   - `total_price` -- `spot_price` + grid fees and energy tax
+- `chargewindow`
+  - `start` -- start of window
+  - `end` -- end of window
+  - `max_price` -- maxiumum price during window
+  - `min_price` -- mininum price during window
+  - `avg_price` -- average price during window
 
 ## Configuration
 
@@ -29,3 +35,4 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
   - energy tax
   - VAT percentage
 - price levels with gte/gte and text
+- charge window parameters
