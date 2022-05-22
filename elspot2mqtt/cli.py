@@ -101,10 +101,14 @@ def main():
         prices_next_24h = dict(
             filter(lambda elem: elem[0] > t and elem[0] < (t + 86400), prices.items())
         )
-        res = find_charge_window(
-            prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
-        )
-        mqtt_payload["charge_window"] = res.to_dict()
+        try:
+            res = find_charge_window(
+                prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
+            )
+            mqtt_payload["charge_window"] = res.to_dict()
+        except ValueError:
+            logger.warning("No charge window possible")
+            pass
 
     if args.stdout:
         print(json.dumps(mqtt_payload, indent=4))
