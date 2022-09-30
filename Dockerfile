@@ -1,7 +1,8 @@
 FROM python:3.10 AS builder
 RUN pip3 install poetry
 WORKDIR /tmp
-COPY pyproject.toml poetry.lock *.py /tmp/
+ADD pyproject.toml poetry.lock /tmp/
+ADD elspot2mqtt /tmp/elspot2mqtt/
 RUN poetry build
 
 FROM python:3.10
