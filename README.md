@@ -36,3 +36,9 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
   - VAT percentage
 - price levels with gte/gte and text
 - charge window parameters
+
+
+
+## Data Sources
+
+- https://www.energidataservice.dk/tso-electricity/elspotprices
