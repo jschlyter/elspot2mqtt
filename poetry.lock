@@ -1,12 +1,4 @@
 [[package]]
-name = "atomicwrites"
-version = "1.4.1"
-description = "Atomic file writes."
-category = "dev"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[[package]]
 name = "attrs"
 version = "22.1.0"
 description = "Classes Without Boilerplate"
@@ -312,17 +304,27 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "pylama"
-version = "7.7.1"
-description = "pylama -- Code audit tool for python"
+version = "8.4.1"
+description = "Code audit tool for python"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 
 [package.dependencies]
-mccabe = ">=0.5.2"
-pycodestyle = ">=2.3.1"
-pydocstyle = ">=2.0.0"
-pyflakes = ">=1.5.0"
+mccabe = ">=0.7.0"
+pycodestyle = ">=2.9.1"
+pydocstyle = ">=6.1.1"
+pyflakes = ">=2.5.0"
+
+[package.extras]
+all = ["eradicate", "mypy", "pylint", "radon", "vulture"]
+eradicate = ["eradicate"]
+mypy = ["mypy"]
+pylint = ["pylint"]
+radon = ["radon"]
+tests = ["eradicate (>=2.0.0)", "mypy", "pylama-quotes", "pylint (>=2.11.1)", "pytest (>=7.1.2)", "pytest-mypy", "radon (>=5.1.0)", "toml", "types-setuptools", "types-toml", "vulture"]
+toml = ["toml (>=0.10.2)"]
+vulture = ["vulture"]
 
 [[package]]
 name = "pyparsing"
@@ -337,24 +339,23 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "6.2.5"
+version = "7.1.3"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
-atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 attrs = ">=19.2.0"
 colorama = {version = "*", markers = "sys_platform == \"win32\""}
 iniconfig = "*"
 packaging = "*"
 pluggy = ">=0.12,<2.0"
 py = ">=1.8.2"
-toml = "*"
+tomli = ">=1.0.0"
 
 [package.extras]
-testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
+testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
 name = "pytest-black"
@@ -371,17 +372,15 @@ toml = "*"
 
 [[package]]
 name = "pytest-isort"
-version = "1.3.0"
+version = "3.0.0"
 description = "py.test plugin to check import ordering using isort"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6,<4"
 
 [package.dependencies]
 isort = ">=4.0"
-
-[package.extras]
-tests = ["mock"]
+pytest = ">=5.0"
 
 [[package]]
 name = "python-dateutil"
@@ -488,12 +487,9 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "9d961346d865747b7f1b3ca70ead75cd1077fbe239baa5a8d312e2905c4df38b"
+content-hash = "da7c42bdc00981cb4d4c92c64503589e88eae8c64fff3039242361efe141f33c"
 
 [metadata.files]
-atomicwrites = [
-    {file = "atomicwrites-1.4.1.tar.gz", hash = "sha256:81b2c9071a49367a7f770170e5eec8cb66567cfbbc8c73d20ce5ca4a8d71cf11"},
-]
 attrs = [
     {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
     {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
@@ -674,23 +670,23 @@ pyflakes = [
     {file = "pyflakes-2.5.0.tar.gz", hash = "sha256:491feb020dca48ccc562a8c0cbe8df07ee13078df59813b83959cbdada312ea3"},
 ]
 pylama = [
-    {file = "pylama-7.7.1-py2.py3-none-any.whl", hash = "sha256:fd61c11872d6256b019ef1235be37b77c922ef37ac9797df6bd489996dddeb15"},
-    {file = "pylama-7.7.1.tar.gz", hash = "sha256:9bae53ef9c1a431371d6a8dca406816a60d547147b60a4934721898f553b7d8f"},
+    {file = "pylama-8.4.1-py3-none-any.whl", hash = "sha256:5bbdbf5b620aba7206d688ed9fc917ecd3d73e15ec1a89647037a09fa3a86e60"},
+    {file = "pylama-8.4.1.tar.gz", hash = "sha256:2d4f7aecfb5b7466216d48610c7d6bad1c3990c29cdd392ad08259b161e486f6"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
 ]
 pytest = [
-    {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},
-    {file = "pytest-6.2.5.tar.gz", hash = "sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89"},
+    {file = "pytest-7.1.3-py3-none-any.whl", hash = "sha256:1377bda3466d70b55e3f5cecfa55bb7cfcf219c7964629b967c37cf0bda818b7"},
+    {file = "pytest-7.1.3.tar.gz", hash = "sha256:4f365fec2dff9c1162f834d9f18af1ba13062db0c708bf7b946f8a5c76180c39"},
 ]
 pytest-black = [
     {file = "pytest-black-0.3.12.tar.gz", hash = "sha256:1d339b004f764d6cd0f06e690f6dd748df3d62e6fe1a692d6a5500ac2c5b75a5"},
 ]
 pytest-isort = [
-    {file = "pytest-isort-1.3.0.tar.gz", hash = "sha256:46a12331a701e2f21d48548b2828c8b0a7956dbf1cd5347163f537deb24332dd"},
-    {file = "pytest_isort-1.3.0-py3-none-any.whl", hash = "sha256:074255ad393088a2daee6ca7f2305b7b86358ff632f62302896d8d4b2b339107"},
+    {file = "pytest-isort-3.0.0.tar.gz", hash = "sha256:4fe4b26ead2af776730ec23f5870d7421f35aace22a41c4e938586ef4d8787cb"},
+    {file = "pytest_isort-3.0.0-py3-none-any.whl", hash = "sha256:2d96a25a135d6fd084ac36878e7d54f26f27c6987c2c65f0d12809bffade9cb9"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
