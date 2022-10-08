@@ -41,7 +41,9 @@ def to_level(p: float, c: float, levels: List) -> str:
     return res
 
 
-def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120):
+def look_ahead(
+    prices: Dict[int, float], pm: ExtraCosts, levels: List, avg_window_size: int = 120
+):
     present = time.time() - 3600
     res = []
 

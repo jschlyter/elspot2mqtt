@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 from dataclasses_json import dataclass_json
@@ -20,12 +20,11 @@ class ChargeWindow:
 
 
 def find_charge_window(
-    prices,
+    prices: Dict[int, float],
     pm: ExtraCosts,
     window: Tuple[str, str],
     threshold: float,
 ) -> ChargeWindow:
-
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
 
     pds = pd.Series(total_prices, index=total_prices.keys())
