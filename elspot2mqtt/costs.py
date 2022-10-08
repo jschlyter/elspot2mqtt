@@ -27,9 +27,13 @@ class ExtraCosts:
         return c + vat
 
 
-def percentage_to_level(p: float, levels: List) -> str:
+def to_level(p: float, c: float, levels: List) -> str:
     res = "NORMAL"
     for rule in levels:
+        if "floor" in rule and c < rule["floor"]:
+            return rule["level"]
+        if "ceiling" in rule and c >= rule["ceiling"]:
+            return rule["level"]
         if "gte" in rule and p >= rule["gte"]:
             return rule["level"]
         elif "lte" in rule and p <= rule["lte"]:
@@ -58,7 +62,7 @@ def look_ahead(prices, pm: ExtraCosts, levels: List, avg_window_size: int = 120)
         if len(costs) >= avg_window_size:
             avg = mean(costs[len(costs) - avg_window_size : len(costs)])
             relpt = round((cost / avg - 1) * 100, 1)
-            level = percentage_to_level(relpt, levels)
+            level = to_level(relpt, cost, levels)
         else:
             avg = 0
             relpt = 0
