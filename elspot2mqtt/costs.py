@@ -2,7 +2,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from statistics import mean
-from typing import List
+from typing import Dict, List
 
 from . import DEFAULT_ROUND
 from .util import find_minimas
