@@ -51,7 +51,7 @@ class PricesDatabase(object):
             )
         self.conn.commit()
 
-    def prune(self, days_retention=7):
+    def prune(self, days_retention=31):
         d = date.today() - timedelta(days=days_retention)
         t = date2timestamp(d)
         cur = self.conn.cursor()
