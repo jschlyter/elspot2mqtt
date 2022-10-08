@@ -2,7 +2,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from statistics import mean
-from typing import List
+from typing import Dict, List
 
 from . import DEFAULT_ROUND
 from .util import find_minimas
@@ -42,7 +42,7 @@ def to_level(p: float, c: float, levels: List) -> str:
 
 
 def look_ahead(
-    prices,
+    prices: Dict[int, float],
     pm: ExtraCosts,
     levels: List,
     avg_window_size: int = 120,

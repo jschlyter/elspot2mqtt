@@ -38,6 +38,24 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
 - charge window parameters
 
 
+## Usage
+
+To run locally, use:
+
+    poetry install
+    poetry run elspot2mqtt --help
+
+or from within `poetry shell`, use:
+
+    elspot2mqtt --help
+
+
+## Container
+
+To build a container, use:
+
+    docker build -t elspot2mqtt .
+
 
 ## Data Sources
 
