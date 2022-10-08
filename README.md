@@ -45,7 +45,7 @@ To run locally, use:
     poetry install
     poetry run elspot2mqtt --help
 
-or from within `poetry shell`, use:
+or from within `poetry shell`:
 
     elspot2mqtt --help
 
@@ -56,9 +56,9 @@ To build a container, use:
 
     docker build -t elspot2mqtt .
 
-If your config file (`elspot2mqtt.json`) is located in $CWD, execute with:
+With your config file (`elspot2mqtt.json`) located in the current working directory, run with:
 
-   docker run --rm -v .:/elspot2mqtt -w /elspot2mqtt elspot2mqtt
+    docker run --rm -v .:/elspot2mqtt -w /elspot2mqtt elspot2mqtt
 
 
 ## Data Sources
