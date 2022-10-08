@@ -17,14 +17,14 @@ class ExtraCosts:
 
     def total_cost(self, c: float) -> float:
         base_cost = self.grid + self.energy_tax
-        c = c + self.markup
-        vat = (c + base_cost) * self.vat_percentage / 100
-        return c + vat + base_cost
+        cost = c + self.markup
+        vat = (cost + base_cost) * self.vat_percentage / 100
+        return base_cost + cost + vat
 
     def spot_cost(self, c: float) -> float:
-        c = c + self.markup
-        vat = c * self.vat_percentage / 100
-        return c + vat
+        cost = c + self.markup
+        vat = cost * self.vat_percentage / 100
+        return cost + vat
 
 
 def to_level(p: float, c: float, levels: List) -> str:
