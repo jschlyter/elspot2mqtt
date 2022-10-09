@@ -55,7 +55,9 @@ def look_ahead(
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
-    minimas = find_minimas_lookahead(dataset=spot_prices, minima_lookahead=minima_lookahead)
+    minimas = find_minimas_lookahead(
+        dataset=spot_prices, minima_lookahead=minima_lookahead
+    )
 
     for t, cost in spot_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
