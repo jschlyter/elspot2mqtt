@@ -8,7 +8,6 @@ RUN poetry build
 FROM python:3.10
 WORKDIR /tmp
 COPY --from=builder /tmp/dist/*.whl .
-RUN pip3 install *.whl
-RUN rm *.whl
+RUN pip3 install *.whl && rm *.whl
 
 ENTRYPOINT elspot2mqtt
