@@ -5,8 +5,28 @@ from typing import Dict
 import pandas as pd
 
 
-def find_minimas(dataset: Dict[int, float], minima_lookahead: int) -> Dict[int, bool]:
+def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
     """Find local minimas in dataset dictionary"""
+    res = {}
+    pairs = [(t, p) for t, p in dataset.items()]
+    l = len(pairs)
+    for i in range(0, l):
+        (t, x) = pairs[i]
+        if i == 0:
+            res[t] = False
+            next
+        elif i == l - 1:
+            res[t] = False
+            next
+        else:
+            (_, a) = pairs[i - 1]
+            (_, b) = pairs[i + 1]
+            res[t] = a > x < b
+    return res
+
+
+def minima_lookahead(dataset: Dict[int, float], minima_lookahead: int) -> Dict[int, bool]:
+    """Find local minimas in dataset dictionary (with pandas)"""
     pds = pd.Series(dataset, index=dataset.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
     pdf["date"] = pd.to_datetime(pdf.index, unit="s")

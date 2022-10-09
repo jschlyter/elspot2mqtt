@@ -17,10 +17,12 @@
 	},
 	"levels": [
 		{
+			"ceiling": 2,
 			"gte": 10,
 			"level": "VERY_EXPENSIVE"
 		},
 		{
+			"ceiling": 1,
 			"gte": 5,
 			"level": "EXPENSIVE"
 		},
@@ -31,6 +33,10 @@
 		{
 			"lte": -10,
 			"level": "VERY_CHEAP"
+		},
+		{
+			"floor": 0.5,
+			"level": "NORMAL"
 		}
 	],
 	"charge_window": {
