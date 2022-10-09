@@ -113,6 +113,7 @@ def main():
             mqtt_payload["charge_window"] = res.to_dict()
         except ValueError:
             logger.warning("No charge window possible")
+            mqtt_payload["charge_window"] = None
             pass
 
     if args.stdout:
