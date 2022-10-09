@@ -53,7 +53,8 @@ def look_ahead(
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
-    costs = []
+
+    spot_costs = []
 
     minimas = find_minimas_lookahead(
         dataset=spot_prices, minima_lookahead=minima_lookahead
@@ -62,17 +63,17 @@ def look_ahead(
     for t, cost in spot_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
 
-        costs.append(cost)
+        spot_costs.append(cost)
 
         if t < present:
             continue
 
-        if len(costs) >= avg_window_size:
-            avg = mean(costs[len(costs) - avg_window_size : len(costs)])
-            relpt = round((cost / avg - 1) * 100, 1)
+        if len(spot_costs) >= avg_window_size:
+            spot_avg = mean(spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)])
+            relpt = round((cost / spot_avg - 1) * 100, 1)
             level = to_level(relpt, cost, levels)
         else:
-            avg = 0
+            spot_avg = 0
             relpt = 0
             level = None
 
@@ -81,7 +82,7 @@ def look_ahead(
             "market_price": round(prices[t], DEFAULT_ROUND),
             "spot_price": round(spot_prices[t], DEFAULT_ROUND),
             "total_price": round(total_prices[t], DEFAULT_ROUND),
-            f"avg{avg_window_size}": round(avg, DEFAULT_ROUND),
+            f"avg{avg_window_size}": round(spot_avg, DEFAULT_ROUND),
             "relpt": relpt,
             "level": level,
             "minima": minimas.get(t, False),
