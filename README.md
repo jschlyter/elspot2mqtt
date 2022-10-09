@@ -58,7 +58,7 @@ To build a container, use:
 
 With your config file (`elspot2mqtt.json`) located in the current working directory, run with:
 
-    docker run --rm -v .:/elspot2mqtt -w /elspot2mqtt elspot2mqtt
+    docker run --rm -v .:/elspot2mqtt -e TZ=Europe/Stockholm -w /elspot2mqtt elspot2mqtt
 
 
 ## Data Sources
