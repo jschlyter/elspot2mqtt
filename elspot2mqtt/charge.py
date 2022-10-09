@@ -27,7 +27,7 @@ def find_charge_window(
 ) -> ChargeWindow:
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
 
-    pds = pd.Series(total_prices, index=total_prices.keys())
+    pds = pd.Series(total_prices, dtype=float, index=total_prices.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
     pdf["abs_min"] = pdf.min().cost
     pdf["datetime"] = (

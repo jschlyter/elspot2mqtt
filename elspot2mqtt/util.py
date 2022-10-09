@@ -29,7 +29,7 @@ def find_minimas_lookahead(
     dataset: Dict[int, float], minima_lookahead: int
 ) -> Dict[int, bool]:
     """Find local minimas in dataset dictionary (with pandas)"""
-    pds = pd.Series(dataset, index=dataset.keys())
+    pds = pd.Series(dataset, dtype=float, index=dataset.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
     pdf["date"] = pd.to_datetime(pdf.index, unit="s")
     pdf["min_cost"] = pdf.cost[
