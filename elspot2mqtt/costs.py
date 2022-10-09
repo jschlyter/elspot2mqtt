@@ -42,7 +42,11 @@ def to_level(p: float, c: float, levels: List) -> str:
 
 
 def look_ahead(
-    prices: Dict[int, float], pm: ExtraCosts, levels: List, avg_window_size: int = 120
+    prices: Dict[int, float],
+    pm: ExtraCosts,
+    levels: List,
+    avg_window_size: int = 120,
+    minima_lookahead: int = 4,
 ):
     present = time.time() - 3600
     res = []
@@ -51,9 +55,9 @@ def look_ahead(
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     costs = []
 
-    minimas = find_minimas(total_prices)
+    minimas = find_minimas(dataset=spot_prices, minima_lookahead=minima_lookahead)
 
-    for t, cost in total_prices.items():
+    for t, cost in spot_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
 
         costs.append(cost)

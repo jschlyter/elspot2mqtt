@@ -85,8 +85,13 @@ def main():
     )
 
     avg_window_size = config.get("avg_window_size", 120)
+    minima_lookahead = config.get("minima_lookahead", 4)
     look_ahead_result = look_ahead(
-        prices=prices, pm=pm, levels=levels, avg_window_size=avg_window_size
+        prices=prices,
+        pm=pm,
+        levels=levels,
+        avg_window_size=avg_window_size,
+        minima_lookahead=minima_lookahead,
     )
     look_behind_result = look_behind(prices=prices, pm=pm)
 
