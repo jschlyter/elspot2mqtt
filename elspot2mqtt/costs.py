@@ -5,7 +5,7 @@ from statistics import mean
 from typing import Dict, List
 
 from . import DEFAULT_ROUND
-from .util import find_minimas
+from .util import find_minimas_lookahead
 
 
 @dataclass
