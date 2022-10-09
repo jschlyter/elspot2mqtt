@@ -69,7 +69,9 @@ def look_ahead(
             continue
 
         if len(spot_costs) >= avg_window_size:
-            spot_avg = mean(spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)])
+            spot_avg = mean(
+                spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)]
+            )
             relpt = round((cost / spot_avg - 1) * 100, 1)
             level = to_level(relpt, cost, levels)
         else:
