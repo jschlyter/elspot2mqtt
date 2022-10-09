@@ -82,7 +82,7 @@ def look_ahead(
             "market_price": round(prices[t], DEFAULT_ROUND),
             "spot_price": round(spot_prices[t], DEFAULT_ROUND),
             "total_price": round(total_prices[t], DEFAULT_ROUND),
-            f"avg{avg_window_size}": round(spot_avg, DEFAULT_ROUND),
+            "avg": round(spot_avg, DEFAULT_ROUND),
             "relpt": relpt,
             "level": level,
             "minima": minimas.get(t, False),
