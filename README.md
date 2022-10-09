@@ -7,7 +7,7 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
   - `market_price` -- raw elspot price
   - `spot_price` -- energy price include markup and VAT
   - `total_price` -- `spot_price` + grid fees and energy tax
-  - `avgNNN` -- floating average of `total_price` for the last NNN hours
+  - `avg` -- floating average of `total_price` for the last NNN hours
   - `relpt` -- relative price percentage compared to `avgNNN`
   - `level` -- price level as text
   - `minima` -- local minima (bool)
