@@ -26,3 +26,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 elspot2mqtt = "elspot2mqtt.cli:main"
+
+[tool.isort]
+profile = "black"
+
+[tool.pylama]
+ignore = "E203"
+
+[tool.pylama.linter.pycodestyle]
+max_line_length = 120
+
+[tool.pylama.linter.mccabe]
+complexity = 40

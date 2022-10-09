@@ -24,3 +24,5 @@ jobs:
       run: poetry install
     - name: Run pytest
       run: poetry run pytest --black --isort
+    - name: Execute
+      run: poetry run elspot2mqtt --help
