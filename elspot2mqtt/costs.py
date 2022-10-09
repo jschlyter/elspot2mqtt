@@ -92,7 +92,7 @@ def look_ahead(
     return res
 
 
-def look_behind(prices, pm: ExtraCosts):
+def look_behind(prices: Dict[int, float], pm: ExtraCosts):
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
