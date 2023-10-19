@@ -9,13 +9,13 @@ def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
     """Find local minimas in dataset dictionary"""
     res = {}
     pairs = [(t, p) for t, p in dataset.items()]
-    l = len(pairs)
-    for i in range(0, l):
+    count = len(pairs)
+    for i in range(0, count):
         (t, x) = pairs[i]
         if i == 0:
             res[t] = False
             next
-        elif i == l - 1:
+        elif i == count - 1:
             res[t] = False
             next
         else:
