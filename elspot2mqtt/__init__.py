@@ -1,5 +1,5 @@
-import pkg_resources
+from importlib.metadata import version
 
-__version__ = pkg_resources.get_distribution("elspot2mqtt").version
+__version__ = version("elspot2mqtt")
 
 DEFAULT_ROUND = 5
