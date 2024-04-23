@@ -1,3 +1,4 @@
+import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -6,6 +7,8 @@ from typing import Dict, List
 
 from . import DEFAULT_ROUND
 from .util import find_minimas_lookahead
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,17 +30,17 @@ class ExtraCosts:
         return cost + vat
 
 
-def to_level(p: float, c: float, levels: List) -> str:
-    res = "NORMAL"
+def to_level(p: float, c: float, levels: List) -> tuple[str, int]:
+    res = "NORMAL", 0
     for rule in levels:
         if "floor" in rule and c < rule["floor"]:
-            return rule["level"]
+            return rule["level"], rule.get("index")
         if "ceiling" in rule and c >= rule["ceiling"]:
-            return rule["level"]
+            return rule["level"], rule.get("index")
         if "gte" in rule and p >= rule["gte"]:
-            return rule["level"]
+            return rule["level"], rule.get("index")
         elif "lte" in rule and p <= rule["lte"]:
-            res = rule["level"]
+            res = rule["level"], rule.get("index")
     return res
 
 
@@ -73,11 +76,13 @@ def look_ahead(
                 spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)]
             )
             relpt = round((cost / spot_avg - 1) * 100, 1)
-            level = to_level(relpt, cost, levels)
+            level, level_index = to_level(relpt, cost, levels)
+            logger.debug(f"{cost=} {level=} {level_index=}")
         else:
             spot_avg = 0
             relpt = 0
             level = None
+            level_index = None
 
         r = {
             "timestamp": dt.isoformat(),
@@ -87,6 +92,7 @@ def look_ahead(
             "avg": round(spot_avg, DEFAULT_ROUND),
             "relpt": relpt,
             "level": level,
+            "level_index": level_index,
             "minima": minimas.get(t, False),
         }
 
