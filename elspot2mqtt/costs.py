@@ -17,6 +17,8 @@ class ExtraCosts:
     grid: float
     energy_tax: float
     vat_percentage: float
+    export_grid: float | None = None
+    export_tax: float | None = None
 
     def total_cost(self, c: float) -> float:
         base_cost = self.grid + self.energy_tax
@@ -28,6 +30,9 @@ class ExtraCosts:
         cost = c + self.markup
         vat = cost * self.vat_percentage / 100
         return cost + vat
+
+    def export_cost(self, c: float) -> float:
+        return c + self.export_grid + self.export_tax
 
 
 def to_level(p: float, c: float, levels: List) -> tuple[str, int]:
@@ -56,6 +61,7 @@ def look_ahead(
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
+    export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
 
     spot_costs = []
 
@@ -89,6 +95,7 @@ def look_ahead(
             "market_price": round(prices[t], DEFAULT_ROUND),
             "spot_price": round(spot_prices[t], DEFAULT_ROUND),
             "total_price": round(total_prices[t], DEFAULT_ROUND),
+            "export_price": round(export_prices[t], DEFAULT_ROUND),
             "avg": round(spot_avg, DEFAULT_ROUND),
             "relpt": relpt,
             "level": level,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elspot2mqtt"
-version = "0.6.0"
+version = "0.7.0"
 description = "Elspot to MQTT Integration"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 

@@ -82,6 +82,8 @@ def main():
         grid=config["costs"]["grid"],
         energy_tax=config["costs"]["energy_tax"],
         vat_percentage=config["costs"]["vat_percentage"],
+        export_grid=config["costs"].get("export_grid", 0),
+        export_tax=config["costs"].get("export_tax", 0),
     )
 
     avg_window_size = config.get("avg_window_size", 120)
