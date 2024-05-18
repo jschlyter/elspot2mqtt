@@ -113,6 +113,7 @@ def look_behind(prices: Dict[int, float], pm: ExtraCosts):
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
+    export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
 
     now = datetime.now().astimezone(tz=None) - timedelta(hours=1)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -128,6 +129,7 @@ def look_behind(prices: Dict[int, float], pm: ExtraCosts):
                 "market_price": round(prices[t], DEFAULT_ROUND),
                 "spot_price": round(spot_prices[t], DEFAULT_ROUND),
                 "total_price": round(total_prices[t], DEFAULT_ROUND),
+                "export_price": round(export_prices[t], DEFAULT_ROUND),
             }
         )
 
