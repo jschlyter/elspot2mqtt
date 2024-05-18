@@ -1,0 +1,4 @@
+services:
+  elspot2mqtt:
+    image: elspot2mqtt
+    build: .
