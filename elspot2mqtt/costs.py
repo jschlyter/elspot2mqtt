@@ -1,9 +1,10 @@
 import logging
 import time
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from statistics import mean
 from typing import Dict, List
+
+from pydantic import BaseModel, Field
 
 from . import DEFAULT_ROUND
 from .util import find_minimas_lookahead
@@ -11,14 +12,13 @@ from .util import find_minimas_lookahead
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ExtraCosts:
+class ExtraCosts(BaseModel):
     markup: float
     grid: float
     energy_tax: float
     vat_percentage: float
-    export_grid: float | None = None
-    export_tax: float | None = None
+    export_grid: float = Field(default=0)
+    export_tax: float = Field(default=0)
 
     def total_cost(self, c: float) -> float:
         base_cost = self.grid + self.energy_tax

@@ -2,11 +2,10 @@ import argparse
 import json
 import logging
 import time
-from dataclasses import dataclass
 from typing import Optional
 
 import paho.mqtt.client as mqtt
-from dataclasses_json import dataclass_json
+from pydantic import BaseModel, Field
 
 from .charge import find_charge_window
 from .costs import ExtraCosts, look_ahead, look_behind
@@ -33,11 +32,9 @@ DEFAULT_CHARGE_THRESHOLD = 0
 logger = logging.getLogger(__name__)
 
 
-@dataclass_json
-@dataclass
-class MqttConfig:
-    host: str = "127.0.0.1"
-    port: int = 1883
+class MqttConfig(BaseModel):
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=1883)
     username: Optional[str] = None
     password: Optional[str] = None
     client_id: Optional[str] = None
@@ -77,14 +74,7 @@ def main():
     prices = db.get_prices()
     levels = config.get("levels", DEFAULT_LEVELS)
 
-    pm = ExtraCosts(
-        markup=config["costs"]["markup"],
-        grid=config["costs"]["grid"],
-        energy_tax=config["costs"]["energy_tax"],
-        vat_percentage=config["costs"]["vat_percentage"],
-        export_grid=config["costs"].get("export_grid", 0),
-        export_tax=config["costs"].get("export_tax", 0),
-    )
+    pm = ExtraCosts.model_validate(config["costs"])
 
     avg_window_size = config.get("avg_window_size", 120)
     minima_lookahead = config.get("minima_lookahead", 4)
@@ -112,7 +102,7 @@ def main():
             res = find_charge_window(
                 prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
             )
-            mqtt_payload["charge_window"] = res.to_dict()
+            mqtt_payload["charge_window"] = res.dict()
         except ValueError:
             logger.warning("No charge window possible")
             mqtt_payload["charge_window"] = None
@@ -121,7 +111,7 @@ def main():
     if args.stdout:
         print(json.dumps(mqtt_payload, indent=4))
 
-    mqtt_config = MqttConfig.from_dict(config["mqtt"])
+    mqtt_config = MqttConfig.model_validate(config["mqtt"])
     if mqtt_config.publish:
         client = mqtt.Client(mqtt_config.client_id)
         if mqtt_config.username:

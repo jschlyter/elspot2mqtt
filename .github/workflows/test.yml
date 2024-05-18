@@ -18,6 +18,6 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Run pytest
-      run: poetry run pytest --black --isort --pylama
+      run: poetry run pytest --ruff --ruff-format --isort 
     - name: Execute
       run: poetry run elspot2mqtt --help

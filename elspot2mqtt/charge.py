@@ -1,17 +1,14 @@
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, Tuple
 
 import pandas as pd
-from dataclasses_json import dataclass_json
+from pydantic import BaseModel
 
 from . import DEFAULT_ROUND
 from .costs import ExtraCosts
 
 
-@dataclass_json
-@dataclass(frozen=True)
-class ChargeWindow:
+class ChargeWindow(BaseModel):
     start: str
     end: str
     max_price: float
