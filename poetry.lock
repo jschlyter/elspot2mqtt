@@ -188,19 +188,19 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "nordpool"
-version = "0.3.3"
+version = "0.4.1"
 description = "Python library for fetching Nord Pool spot prices."
 optional = false
-python-versions = "*"
+python-versions = "<3.13,>=3.10"
 files = [
-    {file = "nordpool-0.3.3-py3-none-any.whl", hash = "sha256:c226f714f00f6967c13511a1f2cda582e8eaf94e5143805d2ea1785775816710"},
-    {file = "nordpool-0.3.3.tar.gz", hash = "sha256:076f5d24e93ab764058718c5965332147a18a74eeeee83893dd4eb9dae3b742d"},
+    {file = "nordpool-0.4.1-py3-none-any.whl", hash = "sha256:11b22dfca0be87be65e4ea7a641fe75f8959f2b25c3a143d84ad50fdb4fa0b1a"},
+    {file = "nordpool-0.4.1.tar.gz", hash = "sha256:15f5067b1bedf1ac51ebfbd7b41a12203fcb970f77eed2b0ffef8cc0eb886f0d"},
 ]
 
 [package.dependencies]
-python-dateutil = ">=2.6.1"
-pytz = ">=2017.2"
-requests = ">=2.18.4"
+python-dateutil = ">=2.9.0.post0,<3.0.0"
+pytz = ">=2024.2,<2025.0"
+requests = ">=2.32.3,<3.0.0"
 
 [[package]]
 name = "numpy"
@@ -684,4 +684,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "aaa45729436e2b1a6849535cc0ae044f250cf471db8499e6fe8dbb3b4a1174c2"
+content-hash = "a93cb77acc2920636d59c4153d475a186dc1b89e217ee54382a8460cc591aec7"
