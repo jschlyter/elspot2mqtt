@@ -118,7 +118,7 @@ def look_behind(prices: Dict[int, float], pm: ExtraCosts):
     now = datetime.now().astimezone(tz=None) - timedelta(hours=1)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    for t, cost in total_prices.items():
+    for t in total_prices:
         dt = datetime.fromtimestamp(t).astimezone(tz=None)
         if dt < start or dt >= now:
             continue

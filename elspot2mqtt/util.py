@@ -12,12 +12,8 @@ def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
     count = len(pairs)
     for i in range(0, count):
         (t, x) = pairs[i]
-        if i == 0:
+        if i == 0 or i == count - 1:
             res[t] = False
-            next
-        elif i == count - 1:
-            res[t] = False
-            next
         else:
             (_, a) = pairs[i - 1]
             (_, b) = pairs[i + 1]

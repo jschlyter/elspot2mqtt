@@ -66,7 +66,7 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    with open(args.conf_filename, "rt") as config_file:
+    with open(args.conf_filename) as config_file:
         config = json.load(config_file)
 
     db = PricesDatabase(filename=config["database"], area=config["area"])

@@ -19,7 +19,7 @@ DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 logger = logging.getLogger(__name__)
 
 
-class PricesDatabase(object):
+class PricesDatabase:
     def __init__(self, filename: str, area: str):
         self.conn = sqlite3.connect(filename)
         self.table = "nordpool"
@@ -136,7 +136,7 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    with open(args.conf_filename, "rt") as config_file:
+    with open(args.conf_filename) as config_file:
         config = json.load(config_file)
 
     db = PricesDatabase(filename=config["database"], area=config["area"])

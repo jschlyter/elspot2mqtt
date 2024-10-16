@@ -10,7 +10,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Install and set up Poetry
       run: |
         pip install poetry
@@ -18,6 +18,6 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Run pytest
-      run: poetry run pytest --ruff --ruff-format --isort 
+      run: poetry run pytest --ruff --ruff-format
     - name: Execute
       run: poetry run elspot2mqtt --help
