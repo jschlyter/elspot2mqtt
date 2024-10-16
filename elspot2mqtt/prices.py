@@ -16,8 +16,6 @@ MAX_WINDOW = 5
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 
 
-elspot.Prices.API_URL = "https://www.nordpoolgroup.com/api/marketdata/page/%i"
-
 logger = logging.getLogger(__name__)
 
 
@@ -86,8 +84,10 @@ class PricesDatabase(object):
         return prices
 
 
-def get_prices_nordpool(end_date: datetime, area: str, currency=CURRENCY) -> {}:
-    spot = elspot.Prices(currency=currency)
+def get_prices_nordpool(
+    end_date: datetime, area: str, currency: str | None = None
+) -> dict:
+    spot = elspot.Prices(currency=currency or CURRENCY)
     prices = {}
     data = spot.hourly(areas=[area], end_date=end_date)
     for entry in data["areas"][area]["values"]:
