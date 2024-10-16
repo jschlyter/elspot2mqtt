@@ -191,16 +191,20 @@ name = "nordpool"
 version = "0.4.1"
 description = "Python library for fetching Nord Pool spot prices."
 optional = false
-python-versions = "<3.13,>=3.10"
-files = [
-    {file = "nordpool-0.4.1-py3-none-any.whl", hash = "sha256:11b22dfca0be87be65e4ea7a641fe75f8959f2b25c3a143d84ad50fdb4fa0b1a"},
-    {file = "nordpool-0.4.1.tar.gz", hash = "sha256:15f5067b1bedf1ac51ebfbd7b41a12203fcb970f77eed2b0ffef8cc0eb886f0d"},
-]
+python-versions = ">=3.10,<3.13"
+files = []
+develop = false
 
 [package.dependencies]
-python-dateutil = ">=2.9.0.post0,<3.0.0"
-pytz = ">=2024.2,<2025.0"
-requests = ">=2.32.3,<3.0.0"
+python-dateutil = "^2.9.0.post0"
+pytz = "^2024.2"
+requests = "^2.32.3"
+
+[package.source]
+type = "git"
+url = "https://github.com/jschlyter/nordpool.git"
+reference = "currency_fix"
+resolved_reference = "982df1a71941990a7eda88bfdfb5177e008484f7"
 
 [[package]]
 name = "numpy"
@@ -684,4 +688,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "a93cb77acc2920636d59c4153d475a186dc1b89e217ee54382a8460cc591aec7"
+content-hash = "4970842f4ff757a04a71112ba701db39bbc99418b1ec26d2eccad9386430c822"

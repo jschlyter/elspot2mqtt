@@ -6,7 +6,8 @@ authors = ["Jakob Schlyter <jakob@kirei.se>"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-nordpool = "^0.3.3"
+#nordpool = ">=0.4.1"
+nordpool = {git = "https://github.com/jschlyter/nordpool.git", rev = "currency_fix"}
 paho-mqtt = "^1.6.1"
 pandas = "^2.1.1"
 pydantic = "^2.7.1"
