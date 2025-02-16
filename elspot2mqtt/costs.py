@@ -31,6 +31,11 @@ class ExtraCosts(BaseModel):
         vat = cost * self.vat_percentage / 100
         return cost + vat
 
+    def grid_cost(self, c: float) -> float:
+        cost = self.grid + self.energy_tax
+        vat = cost * self.vat_percentage / 100
+        return cost + vat
+
     def export_cost(self, c: float) -> float:
         return c + self.export_grid + self.export_tax
 
@@ -60,6 +65,7 @@ def look_ahead(
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
+    grid_prices = {t: pm.grid_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
 
@@ -94,6 +100,7 @@ def look_ahead(
             "timestamp": dt.isoformat(),
             "market_price": round(prices[t], DEFAULT_ROUND),
             "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+            "grid_price": round(grid_prices[t], DEFAULT_ROUND),
             "total_price": round(total_prices[t], DEFAULT_ROUND),
             "export_price": round(export_prices[t], DEFAULT_ROUND),
             "avg": round(spot_avg, DEFAULT_ROUND),
@@ -112,6 +119,7 @@ def look_behind(prices: Dict[int, float], pm: ExtraCosts):
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
+    grid_prices = {t: pm.grid_cost(v) for t, v in prices.items()}
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
 
@@ -128,6 +136,7 @@ def look_behind(prices: Dict[int, float], pm: ExtraCosts):
                 "timestamp": dt.isoformat(),
                 "market_price": round(prices[t], DEFAULT_ROUND),
                 "spot_price": round(spot_prices[t], DEFAULT_ROUND),
+                "grid_price": round(grid_prices[t], DEFAULT_ROUND),
                 "total_price": round(total_prices[t], DEFAULT_ROUND),
                 "export_price": round(export_prices[t], DEFAULT_ROUND),
             }
