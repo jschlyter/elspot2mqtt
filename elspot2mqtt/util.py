@@ -1,11 +1,10 @@
 import time
 from datetime import date, datetime
-from typing import Dict
 
 import pandas as pd
 
 
-def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
+def find_minimas(dataset: dict[int, float]) -> dict[int, bool]:
     """Find local minimas in dataset dictionary"""
     res = {}
     pairs = [(t, p) for t, p in dataset.items()]
@@ -22,8 +21,8 @@ def find_minimas(dataset: Dict[int, float]) -> Dict[int, bool]:
 
 
 def find_minimas_lookahead(
-    dataset: Dict[int, float], minima_lookahead: int
-) -> Dict[int, bool]:
+    dataset: dict[int, float], minima_lookahead: int
+) -> dict[int, bool]:
     """Find local minimas in dataset dictionary (with pandas)"""
     pds = pd.Series(dataset, dtype=float, index=dataset.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])

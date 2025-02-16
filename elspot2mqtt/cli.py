@@ -2,7 +2,6 @@ import argparse
 import json
 import logging
 import time
-from typing import Optional
 
 import paho.mqtt.client as mqtt
 from pydantic import BaseModel, Field
@@ -35,10 +34,10 @@ logger = logging.getLogger(__name__)
 class MqttConfig(BaseModel):
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=1883)
-    username: Optional[str] = None
-    password: Optional[str] = None
-    client_id: Optional[str] = None
-    topic: Optional[str] = None
+    username: str | None = None
+    password: str | None = None
+    client_id: str | None = None
+    topic: str | None = None
     retain: bool = False
     publish: bool = True
 

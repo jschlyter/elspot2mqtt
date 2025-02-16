@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
 
 import pandas as pd
 from pydantic import BaseModel
@@ -17,9 +16,9 @@ class ChargeWindow(BaseModel):
 
 
 def find_charge_window(
-    prices: Dict[int, float],
+    prices: dict[int, float],
     pm: ExtraCosts,
-    window: Tuple[str, str],
+    window: tuple[str, str],
     threshold: float,
 ) -> ChargeWindow:
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}

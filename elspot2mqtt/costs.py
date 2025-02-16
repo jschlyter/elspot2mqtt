@@ -2,7 +2,6 @@ import logging
 import time
 from datetime import datetime, timedelta
 from statistics import mean
-from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +39,7 @@ class ExtraCosts(BaseModel):
         return c + self.export_grid + self.export_tax
 
 
-def to_level(p: float, c: float, levels: List) -> tuple[str, int]:
+def to_level(p: float, c: float, levels: list[dict[str, str | int]]) -> tuple[str, int]:
     res = "NORMAL", 0
     for rule in levels:
         if "floor" in rule and c < rule["floor"]:
@@ -55,9 +54,9 @@ def to_level(p: float, c: float, levels: List) -> tuple[str, int]:
 
 
 def look_ahead(
-    prices: Dict[int, float],
+    prices: dict[int, float],
     pm: ExtraCosts,
-    levels: List,
+    levels: list[dict[str, str | int]],
     avg_window_size: int = 120,
     minima_lookahead: int = 4,
 ):
@@ -115,7 +114,7 @@ def look_ahead(
     return res
 
 
-def look_behind(prices: Dict[int, float], pm: ExtraCosts):
+def look_behind(prices: dict[int, float], pm: ExtraCosts):
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
