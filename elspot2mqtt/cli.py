@@ -1,13 +1,14 @@
 import argparse
+import asyncio
 import json
 import logging
 import time
 
-import paho.mqtt.client as mqtt
+import aiomqtt
 from pydantic import BaseModel, Field
 
-from .charge import find_charge_window
-from .costs import ExtraCosts, look_ahead, look_behind
+from .charge import ChargeWindow, find_charge_window
+from .costs import ExtraCosts, ResultAhead, ResultBehind, look_ahead, look_behind
 from .prices import PricesDatabase
 
 CURRENCY = "SEK"
@@ -26,7 +27,8 @@ DEFAULT_LEVELS = [
 DEFAULT_CHARGE_WINDOW_START = "00:00"
 DEFAULT_CHARGE_WINDOW_END = "05:59"
 DEFAULT_CHARGE_THRESHOLD = 0
-
+DEFAULT_AVG_WINDOW_SIZE = 120
+DEFAULT_MINIMA_LOOKAHEAD = 4
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +39,35 @@ class MqttConfig(BaseModel):
     username: str | None = None
     password: str | None = None
     client_id: str | None = None
-    topic: str | None = None
+    topic: str = Field(default="elspot2mqtt")
     retain: bool = False
     publish: bool = True
 
 
-def main():
+class Response(BaseModel):
+    ahead: list[ResultAhead]
+    behind: list[ResultBehind]
+    charge_window: ChargeWindow | None
+
+
+async def mqtt_publish(config: MqttConfig, payload: str) -> None:
+    """Publish payload via MQTT"""
+
+    async with aiomqtt.Client(
+        hostname=config.host,
+        port=config.port,
+        identifier=config.client_id,
+        username=config.username,
+        password=config.password,
+    ) as client:
+        await client.publish(
+            topic=config.topic,
+            payload=payload,
+            retain=config.retain,
+        )
+
+
+async def async_main():
     """Main function"""
 
     parser = argparse.ArgumentParser(description="elspot2mqtt")
@@ -75,8 +100,9 @@ def main():
 
     pm = ExtraCosts.model_validate(config["costs"])
 
-    avg_window_size = config.get("avg_window_size", 120)
-    minima_lookahead = config.get("minima_lookahead", 4)
+    avg_window_size = config.get("avg_window_size", DEFAULT_AVG_WINDOW_SIZE)
+    minima_lookahead = config.get("minima_lookahead", DEFAULT_MINIMA_LOOKAHEAD)
+
     look_ahead_result = look_ahead(
         prices=prices,
         pm=pm,
@@ -84,9 +110,13 @@ def main():
         avg_window_size=avg_window_size,
         minima_lookahead=minima_lookahead,
     )
-    look_behind_result = look_behind(prices=prices, pm=pm)
 
-    mqtt_payload = {"ahead": look_ahead_result, "behind": look_behind_result}
+    look_behind_result = look_behind(
+        prices=prices,
+        pm=pm,
+    )
+
+    charge_window: ChargeWindow | None = None
 
     if charge_config := config.get("charge_window"):
         t1 = charge_config.get("start", DEFAULT_CHARGE_WINDOW_START)
@@ -98,32 +128,29 @@ def main():
             filter(lambda elem: elem[0] > t and elem[0] < (t + 86400), prices.items())
         )
         try:
-            res = find_charge_window(
+            charge_window = find_charge_window(
                 prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
             )
-            mqtt_payload["charge_window"] = res.dict()
         except ValueError:
             logger.warning("No charge window possible")
-            mqtt_payload["charge_window"] = None
-            pass
+
+    response = Response(
+        ahead=look_ahead_result,
+        behind=look_behind_result,
+        charge_window=charge_window,
+    )
 
     if args.stdout:
-        print(json.dumps(mqtt_payload, indent=4))
+        print(response.model_dump_json(indent=4))
+    else:
+        mqtt_config = MqttConfig.model_validate(config.get("mqtt"))
+        if mqtt_config.publish:
+            await mqtt_publish(config=mqtt_config, payload=response.model_dump_json())
 
-    mqtt_config = MqttConfig.model_validate(config["mqtt"])
-    if mqtt_config.publish:
-        client = mqtt.Client(mqtt_config.client_id)
-        if mqtt_config.username:
-            client.username_pw_set(
-                username=mqtt_config.username, password=mqtt_config.password
-            )
-        client.connect(host=mqtt_config.host, port=mqtt_config.port)
-        client.loop_start()
-        client.publish(
-            mqtt_config.topic, json.dumps(mqtt_payload), retain=mqtt_config.retain
-        )
-        client.loop_stop()
-        client.disconnect()
+
+def main() -> None:
+    """Main function"""
+    asyncio.run(async_main())
 
 
 if __name__ == "__main__":

@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "elspot2mqtt"
-version = "0.8.0"
+version = "0.9.0"
 description = "Elspot to MQTT Integration"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 nordpool = ">=0.4.2"
-paho-mqtt = "^1.6.1"
-pandas = "^2.2.3"
-pydantic = "^2.7.1"
+pandas = ">=2.2.3"
+pydantic = ">=2.7.1"
+aiomqtt = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
-ruff = ">=0.6.9"
+ruff = ">=0.9.9"
 pytest = "^8.2.0"
 pytest-ruff = ">=0.4.1"
 

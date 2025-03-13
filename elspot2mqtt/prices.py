@@ -84,9 +84,7 @@ class PricesDatabase:
         return prices
 
 
-def get_prices_nordpool(
-    end_date: datetime, area: str, currency: str | None = None
-) -> dict:
+def get_prices_nordpool(end_date: date, area: str, currency: str | None = None) -> dict:
     spot = elspot.Prices(currency=currency or CURRENCY)
     prices = {}
     data = spot.hourly(areas=[area], end_date=end_date)

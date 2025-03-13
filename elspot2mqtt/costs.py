@@ -11,6 +11,27 @@ from .util import find_minimas_lookahead
 logger = logging.getLogger(__name__)
 
 
+class Result(BaseModel):
+    timestamp: str
+    market_price: float
+    spot_price: float
+    grid_price: float
+    total_price: float
+    export_price: float
+
+
+class ResultBehind(Result):
+    pass
+
+
+class ResultAhead(Result):
+    avg: float
+    relpt: float
+    level: str | None
+    level_index: int | None
+    minima: bool
+
+
 class ExtraCosts(BaseModel):
     markup: float
     grid: float
@@ -59,7 +80,7 @@ def look_ahead(
     levels: list[dict[str, str | int]],
     avg_window_size: int = 120,
     minima_lookahead: int = 4,
-):
+) -> list[ResultAhead]:
     present = time.time() - 3600
     res = []
 
@@ -95,26 +116,26 @@ def look_ahead(
             level = None
             level_index = None
 
-        r = {
-            "timestamp": dt.isoformat(),
-            "market_price": round(prices[t], DEFAULT_ROUND),
-            "spot_price": round(spot_prices[t], DEFAULT_ROUND),
-            "grid_price": round(grid_prices[t], DEFAULT_ROUND),
-            "total_price": round(total_prices[t], DEFAULT_ROUND),
-            "export_price": round(export_prices[t], DEFAULT_ROUND),
-            "avg": round(spot_avg, DEFAULT_ROUND),
-            "relpt": relpt,
-            "level": level,
-            "level_index": level_index,
-            "minima": minimas.get(t, False),
-        }
+        r = ResultAhead(
+            timestamp=dt.isoformat(),
+            market_price=round(prices[t], DEFAULT_ROUND),
+            spot_price=round(spot_prices[t], DEFAULT_ROUND),
+            grid_price=round(grid_prices[t], DEFAULT_ROUND),
+            total_price=round(total_prices[t], DEFAULT_ROUND),
+            export_price=round(export_prices[t], DEFAULT_ROUND),
+            avg=round(spot_avg, DEFAULT_ROUND),
+            relpt=relpt,
+            level=level,
+            level_index=level_index,
+            minima=minimas.get(t, False),
+        )
 
         res.append(r)
 
     return res
 
 
-def look_behind(prices: dict[int, float], pm: ExtraCosts):
+def look_behind(prices: dict[int, float], pm: ExtraCosts) -> list[ResultBehind]:
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
@@ -130,15 +151,15 @@ def look_behind(prices: dict[int, float], pm: ExtraCosts):
         if dt < start or dt >= now:
             continue
 
-        res.append(
-            {
-                "timestamp": dt.isoformat(),
-                "market_price": round(prices[t], DEFAULT_ROUND),
-                "spot_price": round(spot_prices[t], DEFAULT_ROUND),
-                "grid_price": round(grid_prices[t], DEFAULT_ROUND),
-                "total_price": round(total_prices[t], DEFAULT_ROUND),
-                "export_price": round(export_prices[t], DEFAULT_ROUND),
-            }
+        r = ResultBehind(
+            timestamp=dt.isoformat(),
+            market_price=round(prices[t], DEFAULT_ROUND),
+            spot_price=round(spot_prices[t], DEFAULT_ROUND),
+            grid_price=round(grid_prices[t], DEFAULT_ROUND),
+            total_price=round(total_prices[t], DEFAULT_ROUND),
+            export_price=round(export_prices[t], DEFAULT_ROUND),
         )
+
+        res.append(r)
 
     return res
