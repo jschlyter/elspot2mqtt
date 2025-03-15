@@ -1,27 +1,28 @@
-[tool.poetry]
+[project]
 name = "elspot2mqtt"
 version = "0.9.0"
 description = "Elspot to MQTT Integration"
-authors = ["Jakob Schlyter <jakob@kirei.se>"]
+authors = [{name="Jakob Schlyter", email = "jakob@kirei.se>"}]
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "nordpool>=0.4.2",
+    "pandas>=2.2.3",
+    "pydantic>=2.7.1",
+    "aiomqtt>=2.3.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<4.0"
-nordpool = ">=0.4.2"
-pandas = ">=2.2.3"
-pydantic = ">=2.7.1"
-aiomqtt = "^2.3.0"
+[project.urls]
+repository = "https://github.com/jschlyter/elspot2mqtt.git"
 
-[tool.poetry.group.dev.dependencies]
-ruff = ">=0.9.9"
-pytest = "^8.2.0"
-pytest-ruff = ">=0.4.1"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
+[project.scripts]
 elspot2mqtt = "elspot2mqtt.cli:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.9",
+    "pytest>=8.2.0",
+    "pytest-ruff>=0.4.1"
+]
 
 [tool.ruff.lint]
 select = [
