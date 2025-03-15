@@ -24,6 +24,9 @@ dev = [
     "pytest-ruff>=0.4.1"
 ]
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [tool.ruff.lint]
 select = [
     # pycodestyle
