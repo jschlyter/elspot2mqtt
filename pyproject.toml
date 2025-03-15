@@ -2,7 +2,7 @@
 name = "elspot2mqtt"
 version = "0.9.0"
 description = "Elspot to MQTT Integration"
-authors = [{name="Jakob Schlyter", email = "jakob@kirei.se>"}]
+authors = [{name="Jakob Schlyter", email = "jakob@kirei.se"}]
 requires-python = ">=3.13,<4.0"
 dependencies = [
     "nordpool>=0.4.2",
