@@ -1,23 +1,20 @@
 name: Tests
 
-on: [push, pull_request]
+on: pull_request
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.13"
-    - name: Install and set up Poetry
-      run: |
-        pip install poetry
-        poetry config virtualenvs.in-project true
-    - name: Install dependencies
-      run: poetry install
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: latest
+        enable-cache: true
     - name: Run pytest
-      run: poetry run pytest --ruff --ruff-format
-    - name: Execute
-      run: poetry run elspot2mqtt --help
+      run: uv run pytest --ruff --ruff-format
