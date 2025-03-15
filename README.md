@@ -42,12 +42,7 @@ This script will fetch elspot prices and, for each upcoming hour (starting with 
 
 To run locally, use:
 
-    poetry install
-    poetry run elspot2mqtt --help
-
-or from within `poetry shell`:
-
-    elspot2mqtt --help
+    uv run elspot2mqtt --help
 
 
 ## Container
