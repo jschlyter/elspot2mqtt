@@ -17,15 +17,16 @@ repository = "https://github.com/jschlyter/elspot2mqtt.git"
 [project.scripts]
 elspot2mqtt = "elspot2mqtt.cli:main"
 
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [dependency-groups]
 dev = [
     "ruff>=0.9.9",
     "pytest>=8.2.0",
     "pytest-ruff>=0.4.1"
 ]
-
-[tool.pytest.ini_options]
-pythonpath = ["."]
 
 [tool.ruff.lint]
 select = [
