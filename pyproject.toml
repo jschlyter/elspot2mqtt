@@ -18,8 +18,8 @@ repository = "https://github.com/jschlyter/elspot2mqtt.git"
 elspot2mqtt = "elspot2mqtt.cli:main"
 
 [build-system]
-requires = ["setuptools >= 61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
