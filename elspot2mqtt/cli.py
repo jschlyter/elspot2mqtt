@@ -11,10 +11,6 @@ from .charge import ChargeWindow, find_charge_window
 from .costs import ExtraCosts, ResultAhead, ResultBehind, look_ahead, look_behind
 from .prices import PricesDatabase
 
-CURRENCY = "SEK"
-MAX_WINDOW = 5
-DEFAULT_ROUND = 5
-
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 
 DEFAULT_LEVELS = [
