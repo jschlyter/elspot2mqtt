@@ -27,6 +27,7 @@ class PricesDatabase:
         self.conn.execute(
             f"CREATE TABLE IF NOT EXISTS {self.table} (timestamp INTEGER PRIMARY KEY, value REAL);"
         )
+        self.logger = logger.getChild(self.__class__.__name__)
 
     def get(self, d: date):
         t1 = date2timestamp(d)
@@ -60,16 +61,15 @@ class PricesDatabase:
         for offset in range(-window, 2):
             end_date = date.today() + timedelta(days=offset)
             if offset == 1 and datetime.now().hour < 13:
-                logger.debug("Data for %s skipped until 13.00", end_date)
+                self.logger.debug("Data for %s skipped until 13.00", end_date)
                 continue
-            logger.debug("Processing %s, offset=%d", end_date, offset)
             p = self.get(end_date)
             if p is None:
-                logger.debug("Fetching data for %s from Nordpool", end_date)
+                self.logger.debug("Fetching data for %s from Nordpool", end_date)
                 p = get_prices_nordpool(end_date=end_date, area=self.area)
                 self.store(p)
             else:
-                logger.debug("Using cached data for %s", end_date)
+                self.logger.debug("Using cached data for %s", end_date)
 
     def get_prices(self, window: int = MAX_WINDOW):
         self.prune(window)
@@ -77,7 +77,7 @@ class PricesDatabase:
         prices = {}
         for offset in range(-window, 2):
             end_date = date.today() + timedelta(days=offset)
-            logger.debug("Processing %s, offset=%d", end_date, offset)
+            self.logger.debug("Get prices for %s, offset=%d", end_date, offset)
             p = self.get(end_date)
             if p is not None:
                 prices.update(p)
@@ -104,7 +104,7 @@ def get_prices_database(db, area):
         if offset == 1 and datetime.now().hour < 13:
             logger.debug("Data for %s skipped until 13.00", end_date)
             continue
-        logger.debug("Processing %s, offset=%d", end_date, offset)
+        logger.debug("Get prices for %s, offset=%d", end_date, offset)
         p = db.get(end_date)
         if p is None:
             logger.debug("Fetching data for %s from Nordpool", end_date)
