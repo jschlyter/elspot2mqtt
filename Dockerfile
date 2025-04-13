@@ -1,13 +1,41 @@
-FROM python:3.13 AS builder
-RUN pip3 install uv
-WORKDIR /tmp
-ADD pyproject.toml /tmp/
-ADD elspot2mqtt /tmp/elspot2mqtt/
-RUN uv build
+FROM python:3.13-bookworm AS builder
 
-FROM python:3.13
-WORKDIR /tmp
-COPY --from=builder /tmp/dist/*.whl .
-RUN pip3 install *.whl && rm *.whl
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENTRYPOINT elspot2mqtt
+WORKDIR /build
+
+ADD . /build/
+
+# We want the same version of packages, but we might need more
+# because the lock file might be meant for another architecture or version of Python
+RUN uv export --format requirements-txt --output-file /constraints.txt \
+    --no-editable --no-dev --no-emit-workspace --frozen --no-index --no-hashes
+
+# We then compile using the constraints and our python we expect to run in production
+RUN uv pip compile --constraints /constraints.txt --output-file /requirements.txt pyproject.toml
+
+# Install requirements into /env
+RUN --mount=type=cache,target=/root/.cache \
+    pip install \
+    --no-deps --disable-pip-version-check \
+    --target /env \
+    --requirement /requirements.txt
+
+# Build application wheel
+RUN --mount=type=cache,target=/root/.cache \
+    uv build --wheel
+
+# Install the application into /app
+RUN --mount=type=cache,target=/root/.cache \
+    pip install \
+    --no-deps --disable-pip-version-check \
+    --target /app \
+    dist/*.whl
+
+
+FROM python:3.13-slim-bookworm
+COPY --from=builder /env /env
+COPY --from=builder /app /app
+ENV PYTHONPATH=/app:/env
+ENV PATH=/app/bin
+ENTRYPOINT ["elspot2mqtt"]
