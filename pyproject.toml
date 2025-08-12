@@ -1,6 +1,6 @@
 [project]
 name = "elspot2mqtt"
-version = "0.9.0"
+dynamic = ["version"]
 description = "Elspot to MQTT Integration"
 authors = [{name="Jakob Schlyter", email = "jakob@kirei.se"}]
 requires-python = ">=3.13,<4.0"
@@ -18,11 +18,11 @@ repository = "https://github.com/jschlyter/elspot2mqtt.git"
 elspot2mqtt = "elspot2mqtt.cli:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["elspot2mqtt"]
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
 
 [dependency-groups]
 dev = [
