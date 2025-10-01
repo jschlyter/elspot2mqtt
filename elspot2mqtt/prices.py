@@ -19,6 +19,9 @@ DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
 logger = logging.getLogger(__name__)
 
 
+type PriceDict = dict[int, float]
+
+
 class PricesDatabase:
     def __init__(self, filename: str, area: str):
         self.conn = sqlite3.connect(filename)
@@ -29,7 +32,7 @@ class PricesDatabase:
         )
         self.logger = logger.getChild(self.__class__.__name__)
 
-    def get(self, d: date):
+    def get(self, d: date) -> PriceDict | None:
         t1 = date2timestamp(d)
         t2 = t1 + 86400
         cur = self.conn.cursor()
@@ -42,7 +45,7 @@ class PricesDatabase:
             return None
         return {r[0]: r[1] for r in rows}
 
-    def store(self, prices):
+    def store(self, prices: PriceDict) -> None:
         cur = self.conn.cursor()
         for t, v in prices.items():
             cur.execute(
@@ -50,14 +53,14 @@ class PricesDatabase:
             )
         self.conn.commit()
 
-    def prune(self, days_retention=31):
+    def prune(self, days_retention=31) -> None:
         d = date.today() - timedelta(days=days_retention)
         t = date2timestamp(d)
         cur = self.conn.cursor()
         cur.execute(f"DELETE FROM {self.table} WHERE timestamp<?", (t,))
         self.conn.commit()
 
-    def update(self, window: int = MAX_WINDOW):
+    def update(self, window: int = MAX_WINDOW) -> None:
         for offset in range(-window, 2):
             end_date = date.today() + timedelta(days=offset)
             if offset == 1 and datetime.now().hour < 13:
@@ -71,7 +74,7 @@ class PricesDatabase:
             else:
                 self.logger.debug("Using cached data for %s", end_date)
 
-    def get_prices(self, window: int = MAX_WINDOW):
+    def get_prices(self, window: int = MAX_WINDOW) -> PriceDict:
         self.prune(window)
         self.update(window)
         prices = {}
@@ -84,9 +87,9 @@ class PricesDatabase:
         return prices
 
 
-def get_prices_nordpool(end_date: date, area: str, currency: str | None = None) -> dict:
-    spot = elspot.Prices(currency=currency or CURRENCY)
-    prices = {}
+def get_prices_nordpool(end_date: date, area: str) -> PriceDict:
+    spot = elspot.Prices(CURRENCY)
+    prices: PriceDict = {}
     data = spot.hourly(areas=[area], end_date=end_date)
     for entry in data["areas"][area]["values"]:
         cost = entry["value"]
@@ -96,22 +99,6 @@ def get_prices_nordpool(end_date: date, area: str, currency: str | None = None) 
         t = int(time.mktime(dt.timetuple()))
         prices[t] = cost / 1000
     return prices
-
-
-def get_prices_database(db, area):
-    for offset in range(-MAX_WINDOW, 2):
-        end_date = date.today() + timedelta(days=offset)
-        if offset == 1 and datetime.now().hour < 13:
-            logger.debug("Data for %s skipped until 13.00", end_date)
-            continue
-        logger.debug("Get prices for %s, offset=%d", end_date, offset)
-        p = db.get(end_date)
-        if p is None:
-            logger.debug("Fetching data for %s from Nordpool", end_date)
-            p = get_prices_nordpool(end_date=end_date, area=area)
-            db.store(p)
-        else:
-            logger.debug("Using cached data for %s", end_date)
 
 
 def main():
