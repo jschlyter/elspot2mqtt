@@ -1,16 +1,17 @@
 import argparse
+import asyncio
+import datetime
 import json
 import logging
 import math
 import sqlite3
-import time
-from datetime import date, datetime, timedelta
 
-from nordpool import elspot
+import aiohttp
+from pynordpool import Currency, NordPoolClient
 
 from .util import date2timestamp
 
-CURRENCY = "SEK"
+CURRENCY = Currency.SEK
 MAX_WINDOW = 5
 
 DEFAULT_CONF_FILENAME = "elspot2mqtt.json"
@@ -32,7 +33,7 @@ class PricesDatabase:
         )
         self.logger = logger.getChild(self.__class__.__name__)
 
-    def get(self, d: date) -> PriceDict | None:
+    def get(self, d: datetime.date) -> PriceDict | None:
         t1 = date2timestamp(d)
         t2 = t1 + 86400
         cur = self.conn.cursor()
@@ -53,33 +54,33 @@ class PricesDatabase:
             )
         self.conn.commit()
 
-    def prune(self, days_retention=31) -> None:
-        d = date.today() - timedelta(days=days_retention)
+    def prune(self, days_retention: int = 31) -> None:
+        d = datetime.date.today() - datetime.timedelta(days=days_retention)
         t = date2timestamp(d)
         cur = self.conn.cursor()
         cur.execute(f"DELETE FROM {self.table} WHERE timestamp<?", (t,))
         self.conn.commit()
 
-    def update(self, window: int = MAX_WINDOW) -> None:
+    async def update(self, window: int = MAX_WINDOW) -> None:
         for offset in range(-window, 2):
-            end_date = date.today() + timedelta(days=offset)
-            if offset == 1 and datetime.now().hour < 13:
+            end_date = datetime.date.today() + datetime.timedelta(days=offset)
+            if offset == 1 and datetime.datetime.now().hour < 13:
                 self.logger.debug("Data for %s skipped until 13.00", end_date)
                 continue
             p = self.get(end_date)
             if p is None:
                 self.logger.debug("Fetching data for %s from Nordpool", end_date)
-                p = get_prices_nordpool(end_date=end_date, area=self.area)
+                p = await get_prices_nordpool(end_date, self.area)
                 self.store(p)
             else:
                 self.logger.debug("Using cached data for %s", end_date)
 
-    def get_prices(self, window: int = MAX_WINDOW) -> PriceDict:
+    async def get_prices(self, window: int = MAX_WINDOW) -> PriceDict:
         self.prune(window)
-        self.update(window)
+        await self.update(window)
         prices = {}
         for offset in range(-window, 2):
-            end_date = date.today() + timedelta(days=offset)
+            end_date = datetime.date.today() + datetime.timedelta(days=offset)
             self.logger.debug("Get prices for %s, offset=%d", end_date, offset)
             p = self.get(end_date)
             if p is not None:
@@ -87,16 +88,22 @@ class PricesDatabase:
         return prices
 
 
-def get_prices_nordpool(end_date: date, area: str) -> PriceDict:
-    spot = elspot.Prices(CURRENCY)
+async def get_prices_nordpool(dt: datetime.date, area: str) -> PriceDict:
     prices: PriceDict = {}
-    data = spot.hourly(areas=[area], end_date=end_date)
-    for entry in data["areas"][area]["values"]:
-        cost = entry["value"]
+
+    period_start_date = datetime.datetime.combine(dt, datetime.time(hour=0, minute=0))
+
+    async with aiohttp.ClientSession() as session:
+        client = NordPoolClient(session)
+        delivery_period_data = await client.async_get_delivery_period(
+            period_start_date, CURRENCY, [area]
+        )
+
+    for entry in delivery_period_data.entries:
+        cost = entry.entry[area]
         if math.isinf(cost):
             continue
-        dt = entry["start"].astimezone(tz=None)
-        t = int(time.mktime(dt.timetuple()))
+        t = int(entry.start.timestamp())
         prices[t] = cost / 1000
     return prices
 
@@ -127,7 +134,7 @@ def main():
     db = PricesDatabase(filename=config["database"], area=config["area"])
 
     db.prune(MAX_WINDOW)
-    db.update(MAX_WINDOW)
+    asyncio.run(db.update(MAX_WINDOW))
 
 
 if __name__ == "__main__":

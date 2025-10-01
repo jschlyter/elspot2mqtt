@@ -6,9 +6,12 @@ from statistics import mean
 from pydantic import BaseModel, Field
 
 from . import DEFAULT_ROUND
+from .prices import PriceDict
 from .util import find_minimas_lookahead
 
 logger = logging.getLogger(__name__)
+TIMEZONE = None
+AHEAD_OFFSET = 3600
 
 
 class Result(BaseModel):
@@ -75,13 +78,13 @@ def to_level(p: float, c: float, levels: list[dict[str, str | int]]) -> tuple[st
 
 
 def look_ahead(
-    prices: dict[int, float],
+    prices: PriceDict,
     pm: ExtraCosts,
     levels: list[dict[str, str | int]],
     avg_window_size: int = 120,
     minima_lookahead: int = 4,
 ) -> list[ResultAhead]:
-    present = time.time() - 3600
+    present = time.time() - AHEAD_OFFSET
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
@@ -96,7 +99,7 @@ def look_ahead(
     )
 
     for t, cost in spot_prices.items():
-        dt = datetime.fromtimestamp(t).astimezone(tz=None)
+        dt = datetime.fromtimestamp(t).astimezone(tz=TIMEZONE)
 
         spot_costs.append(cost)
 
@@ -135,7 +138,7 @@ def look_ahead(
     return res
 
 
-def look_behind(prices: dict[int, float], pm: ExtraCosts) -> list[ResultBehind]:
+def look_behind(prices: PriceDict, pm: ExtraCosts) -> list[ResultBehind]:
     res = []
 
     spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
@@ -143,11 +146,11 @@ def look_behind(prices: dict[int, float], pm: ExtraCosts) -> list[ResultBehind]:
     total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
     export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
 
-    now = datetime.now().astimezone(tz=None) - timedelta(hours=1)
+    now = datetime.now().astimezone(tz=TIMEZONE) - timedelta(hours=1)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     for t in total_prices:
-        dt = datetime.fromtimestamp(t).astimezone(tz=None)
+        dt = datetime.fromtimestamp(t).astimezone(tz=TIMEZONE)
         if dt < start or dt >= now:
             continue
 

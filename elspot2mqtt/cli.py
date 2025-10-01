@@ -91,7 +91,7 @@ async def async_main():
 
     db = PricesDatabase(filename=config["database"], area=config["area"])
 
-    prices = db.get_prices()
+    prices = await db.get_prices()
     levels = config.get("levels", DEFAULT_LEVELS)
 
     pm = ExtraCosts.model_validate(config["costs"])

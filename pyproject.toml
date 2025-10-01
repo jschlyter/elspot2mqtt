@@ -5,10 +5,10 @@ description = "Elspot to MQTT Integration"
 authors = [{name="Jakob Schlyter", email = "jakob@kirei.se"}]
 requires-python = ">=3.13,<4.0"
 dependencies = [
-    "nordpool>=0.4.2",
     "pandas>=2.2.3",
     "pydantic>=2.7.1",
     "aiomqtt>=2.3.0",
+    "pynordpool>=0.3.0",
 ]
 
 [project.urls]
