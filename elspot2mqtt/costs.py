@@ -1,7 +1,7 @@
 import logging
+import statistics
 import time
 from datetime import datetime, timedelta
-from statistics import mean
 
 from pydantic import BaseModel, Field
 
@@ -10,8 +10,9 @@ from .prices import PriceDict
 from .util import find_minimas_lookahead
 
 logger = logging.getLogger(__name__)
+
 TIMEZONE = None
-AHEAD_OFFSET = 3600
+DEFAULT_OFFSET = 15 * 60
 
 
 class Result(BaseModel):
@@ -42,25 +43,36 @@ class ExtraCosts(BaseModel):
     vat_percentage: float
     export_grid: float = Field(default=0)
     export_tax: float = Field(default=0)
+    export_markup: float = Field(default=0)
 
-    def total_cost(self, c: float) -> float:
-        base_cost = self.grid + self.energy_tax
-        cost = c + self.markup
-        vat = (cost + base_cost) * self.vat_percentage / 100
-        return base_cost + cost + vat
+    def get_total(self, c: float) -> float:
+        """Total price for import"""
+        return self.get_spot(c) + self.get_grid(c)
 
-    def spot_cost(self, c: float) -> float:
+    def get_spot(self, c: float) -> float:
+        """Total energy price for import"""
         cost = c + self.markup
         vat = cost * self.vat_percentage / 100
         return cost + vat
 
-    def grid_cost(self, c: float) -> float:
+    def get_grid(self, c: float) -> float:
+        """Total grid price for import"""
         cost = self.grid + self.energy_tax
         vat = cost * self.vat_percentage / 100
         return cost + vat
 
-    def export_cost(self, c: float) -> float:
-        return c + self.export_grid + self.export_tax
+    def get_export(self, c: float) -> float:
+        """Total price for export"""
+        return c + self.export_grid + self.export_tax + self.export_markup
+
+
+def average_bucket(prices: dict[int, float], size: int) -> dict[int, float]:
+    p = [(k, v) for k, v in prices.items()]
+    res = {}
+    for i in range(0, len(p), size):
+        t = p[i][0]
+        res[t] = statistics.fmean([x[1] for x in p[i : i + size]])
+    return res
 
 
 def to_level(p: float, c: float, levels: list[dict[str, str | int]]) -> tuple[str, int]:
@@ -83,14 +95,15 @@ def look_ahead(
     levels: list[dict[str, str | int]],
     avg_window_size: int = 120,
     minima_lookahead: int = 4,
+    offset: int = DEFAULT_OFFSET,
 ) -> list[ResultAhead]:
-    present = time.time() - AHEAD_OFFSET
+    present = time.time() - offset
     res = []
 
-    spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
-    grid_prices = {t: pm.grid_cost(v) for t, v in prices.items()}
-    total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
-    export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
+    spot_prices = {t: pm.get_spot(v) for t, v in prices.items()}
+    grid_prices = {t: pm.get_grid(v) for t, v in prices.items()}
+    total_prices = {t: pm.get_total(v) for t, v in prices.items()}
+    export_prices = {t: pm.get_export(v) for t, v in prices.items()}
 
     spot_costs = []
 
@@ -107,7 +120,7 @@ def look_ahead(
             continue
 
         if len(spot_costs) >= avg_window_size:
-            spot_avg = mean(
+            spot_avg = statistics.fmean(
                 spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)]
             )
             relpt = round((cost / spot_avg - 1) * 100, 1)
@@ -138,15 +151,19 @@ def look_ahead(
     return res
 
 
-def look_behind(prices: PriceDict, pm: ExtraCosts) -> list[ResultBehind]:
+def look_behind(
+    prices: PriceDict,
+    pm: ExtraCosts,
+    offset: int = DEFAULT_OFFSET,
+) -> list[ResultBehind]:
     res = []
 
-    spot_prices = {t: pm.spot_cost(v) for t, v in prices.items()}
-    grid_prices = {t: pm.grid_cost(v) for t, v in prices.items()}
-    total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
-    export_prices = {t: pm.export_cost(v) for t, v in prices.items()}
+    spot_prices = {t: pm.get_spot(v) for t, v in prices.items()}
+    grid_prices = {t: pm.get_grid(v) for t, v in prices.items()}
+    total_prices = {t: pm.get_total(v) for t, v in prices.items()}
+    export_prices = {t: pm.get_export(v) for t, v in prices.items()}
 
-    now = datetime.now().astimezone(tz=TIMEZONE) - timedelta(hours=1)
+    now = datetime.now().astimezone(tz=TIMEZONE) - timedelta(seconds=offset)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     for t in total_prices:

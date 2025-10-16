@@ -107,10 +107,7 @@ async def async_main():
         minima_lookahead=minima_lookahead,
     )
 
-    look_behind_result = look_behind(
-        prices=prices,
-        pm=pm,
-    )
+    look_behind_result = look_behind(prices=prices, pm=pm)
 
     charge_window: ChargeWindow | None = None
 

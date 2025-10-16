@@ -21,7 +21,7 @@ def find_charge_window(
     window: tuple[str, str],
     threshold: float,
 ) -> ChargeWindow:
-    total_prices = {t: pm.total_cost(v) for t, v in prices.items()}
+    total_prices = {t: pm.get_total(v) for t, v in prices.items()}
 
     pds = pd.Series(total_prices, dtype=float, index=total_prices.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
