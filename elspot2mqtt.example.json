@@ -1,49 +1,49 @@
 {
-	"database": "nordpool.db",
-	"area": "SE3",
-	"avg_window_size": 120,
-	"mqtt": {
-		"host": "127.0.0.1",
-		"client_id": "elspot",
-		"topic": "nordpool/lookahead",
-		"retain": false,
-		"publish": true
-	},
-	"costs": {
-		"markup": 0.0169,
-		"grid": 0.254,
-		"energy_tax": 0.445,
-		"vat_percentage": 25,
-		"export_grid": -0.065,
-		"export_tax": -0.60
-	},
-	"levels": [
-		{
-			"ceiling": 2,
-			"gte": 10,
-			"level": "VERY_EXPENSIVE"
-		},
-		{
-			"ceiling": 1,
-			"gte": 5,
-			"level": "EXPENSIVE"
-		},
-		{
-			"lte": -5,
-			"level": "CHEAP"
-		},
-		{
-			"lte": -10,
-			"level": "VERY_CHEAP"
-		},
-		{
-			"floor": 0.5,
-			"level": "NORMAL"
-		}
-	],
-	"charge_window": {
-		"start": "00:00",
-		"end": "06:00",
-		"threshold": 0.2
-	}
+  "database": "nordpool.db",
+  "area": "SE3",
+  "avg_window_size": 120,
+  "mqtt": {
+    "host": "127.0.0.1",
+    "client_id": "elspot",
+    "topic": "nordpool/lookahead",
+    "retain": false,
+    "publish": true
+  },
+  "costs": {
+    "markup": 0.0169,
+    "grid": 0.254,
+    "energy_tax": 0.36,
+    "vat_percentage": 25,
+    "export_grid": -0.065,
+    "export_tax": 0
+  },
+  "levels": [
+    {
+      "ceiling": 2,
+      "gte": 10,
+      "level": "VERY_EXPENSIVE"
+    },
+    {
+      "ceiling": 1,
+      "gte": 5,
+      "level": "EXPENSIVE"
+    },
+    {
+      "lte": -5,
+      "level": "CHEAP"
+    },
+    {
+      "lte": -10,
+      "level": "VERY_CHEAP"
+    },
+    {
+      "floor": 0.5,
+      "level": "NORMAL"
+    }
+  ],
+  "charge_window": {
+    "start": "00:00",
+    "end": "06:00",
+    "threshold": 0.2
+  }
 }
