@@ -10,12 +10,12 @@
     "publish": true
   },
   "costs": {
-    "markup": 0.0169,
-    "grid": 0.254,
-    "energy_tax": 0.36,
-    "vat_percentage": 25,
-    "export_grid": -0.065,
-    "export_tax": 0
+    "import_markup": 0.0169,
+    "import_grid": 0.254,
+    "import_tax": 0.36,
+    "export_grid": 0.065,
+    "export_tax": 0,
+    "vat_percentage": 25
   },
   "levels": [
     {
