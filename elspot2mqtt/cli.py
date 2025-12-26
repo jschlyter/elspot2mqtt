@@ -124,8 +124,9 @@ async def async_main():
             charge_window = find_charge_window(
                 prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
             )
-        except ValueError:
+        except ValueError as exc:
             logger.warning("No charge window possible")
+            logger.debug(str(exc))
 
     response = Response(
         ahead=look_ahead_result,
