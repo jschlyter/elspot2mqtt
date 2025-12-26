@@ -37,13 +37,15 @@ class ResultAhead(Result):
 
 
 class ExtraCosts(BaseModel):
-    markup: float
-    grid: float
-    energy_tax: float
-    vat_percentage: float
+    import_markup: float = Field(validation_alias="markup")
+    import_grid: float = Field(validation_alias="grid")
+    import_tax: float = Field(validation_alias="energy_tax")
+
+    export_markup: float = Field(default=0)
     export_grid: float = Field(default=0)
     export_tax: float = Field(default=0)
-    export_markup: float = Field(default=0)
+
+    vat_percentage: float
 
     def get_total(self, c: float) -> float:
         """Total price for import"""
@@ -51,13 +53,13 @@ class ExtraCosts(BaseModel):
 
     def get_spot(self, c: float) -> float:
         """Total energy price for import"""
-        cost = c + self.markup
+        cost = c + self.import_markup
         vat = cost * self.vat_percentage / 100
         return cost + vat
 
     def get_grid(self, c: float) -> float:
         """Total grid price for import"""
-        cost = self.grid + self.energy_tax
+        cost = self.import_grid + self.import_tax
         vat = cost * self.vat_percentage / 100
         return cost + vat
 
