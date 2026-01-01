@@ -3,7 +3,7 @@ import statistics
 import time
 from datetime import datetime, timedelta
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from . import DEFAULT_ROUND
 from .prices import PriceDict
@@ -37,9 +37,11 @@ class ResultAhead(Result):
 
 
 class ExtraCosts(BaseModel):
-    import_markup: float = Field(validation_alias="markup")
-    import_grid: float = Field(validation_alias="grid")
-    import_tax: float = Field(validation_alias="energy_tax")
+    import_markup: float = Field(
+        validation_alias=AliasChoices("import_markup", "markup")
+    )
+    import_grid: float = Field(validation_alias=AliasChoices("import_grid", "grid"))
+    import_tax: float = Field(validation_alias=AliasChoices("import_tax", "energy_tax"))
 
     export_markup: float = Field(default=0)
     export_grid: float = Field(default=0)
