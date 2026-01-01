@@ -20,16 +20,12 @@ def find_minimas(dataset: dict[int, float]) -> dict[int, bool]:
     return res
 
 
-def find_minimas_lookahead(
-    dataset: dict[int, float], minima_lookahead: int
-) -> dict[int, bool]:
+def find_minimas_lookahead(dataset: dict[int, float], minima_lookahead: int) -> dict[int, bool]:
     """Find local minimas in dataset dictionary (with pandas)"""
     pds = pd.Series(dataset, dtype=float, index=dataset.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
     pdf["date"] = pd.to_datetime(pdf.index, unit="s")
-    pdf["min_cost"] = pdf.cost[
-        (pdf.cost.shift(1) > pdf.cost) & (pdf.cost.shift(-1) > pdf.cost)
-    ]
+    pdf["min_cost"] = pdf.cost[(pdf.cost.shift(1) > pdf.cost) & (pdf.cost.shift(-1) > pdf.cost)]
     pdf["min_ahead"] = pdf["cost"].rolling(window=minima_lookahead).min()
     pdf["min_ahead"] = pdf["min_ahead"].shift(-minima_lookahead)
     pdf["minima"] = pdf.min_cost <= pdf.min_ahead
@@ -38,7 +34,5 @@ def find_minimas_lookahead(
 
 def date2timestamp(d: date) -> int:
     """Get unix timestamp of midnight of date"""
-    dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(
-        tz=None
-    )
+    dt = datetime(year=d.year, month=d.month, day=d.day, tzinfo=None).astimezone(tz=None)
     return int(time.mktime(dt.timetuple()))

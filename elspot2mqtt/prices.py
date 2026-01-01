@@ -28,9 +28,7 @@ class PricesDatabase:
         self.conn = sqlite3.connect(filename)
         self.table = "nordpool"
         self.area = area
-        self.conn.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.table} (timestamp INTEGER PRIMARY KEY, value REAL);"
-        )
+        self.conn.execute(f"CREATE TABLE IF NOT EXISTS {self.table} (timestamp INTEGER PRIMARY KEY, value REAL);")
         self.logger = logger.getChild(self.__class__.__name__)
 
     def get(self, d: datetime.date) -> PriceDict | None:
@@ -49,9 +47,7 @@ class PricesDatabase:
     def store(self, prices: PriceDict) -> None:
         cur = self.conn.cursor()
         for t, v in prices.items():
-            cur.execute(
-                f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (t, v)
-            )
+            cur.execute(f"REPLACE INTO {self.table} (timestamp,value) VALUES(?,?)", (t, v))
         self.conn.commit()
 
     def prune(self, days_retention: int = 31) -> None:
@@ -95,9 +91,7 @@ async def get_prices_nordpool(dt: datetime.date, area: str) -> PriceDict:
 
     async with aiohttp.ClientSession() as session:
         client = NordPoolClient(session)
-        delivery_period_data = await client.async_get_delivery_period(
-            period_start_date, CURRENCY, [area]
-        )
+        delivery_period_data = await client.async_get_delivery_period(period_start_date, CURRENCY, [area])
 
     for entry in delivery_period_data.entries:
         cost = entry.entry[area]
@@ -120,9 +114,7 @@ def main():
         help="configuration file",
         required=False,
     )
-    parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Print debug information"
-    )
+    parser.add_argument("--debug", dest="debug", action="store_true", help="Print debug information")
     args = parser.parse_args()
 
     if args.debug:

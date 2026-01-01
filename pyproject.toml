@@ -31,6 +31,9 @@ dev = [
     "pytest-ruff>=0.4.1"
 ]
 
+[tool.ruff]
+line-length = 132
+
 [tool.ruff.lint]
 select = [
     # pycodestyle

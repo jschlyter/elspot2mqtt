@@ -26,20 +26,12 @@ def find_charge_window(
     pds = pd.Series(total_prices, dtype=float, index=total_prices.keys())
     pdf = pd.DataFrame(pds, columns=["cost"])
     pdf["abs_min"] = pdf.min().cost
-    pdf["datetime"] = (
-        pd.to_datetime(pdf.index, unit="s")
-        .tz_localize("UTC")
-        .tz_convert("Europe/Stockholm")
-    )
+    pdf["datetime"] = pd.to_datetime(pdf.index, unit="s").tz_localize("UTC").tz_convert("Europe/Stockholm")
 
-    pdf["charge"] = pdf["datetime"].isin(
-        pdf.set_index("datetime").between_time(*window).index
-    )
+    pdf["charge"] = pdf["datetime"].isin(pdf.set_index("datetime").between_time(*window).index)
     pdf.loc[pdf.cost <= (pdf.abs_min + threshold), "charge"] = True
 
-    a = pdf.set_index("datetime").between_time(datetime.now().time(), window[0])[
-        "charge"
-    ]
+    a = pdf.set_index("datetime").between_time(datetime.now().time(), window[0])["charge"]
     start = a.ne(a.shift()).cumsum().drop_duplicates(keep="first").idxmax()
 
     b = pdf.set_index("datetime").between_time(

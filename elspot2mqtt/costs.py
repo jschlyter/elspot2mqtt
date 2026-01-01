@@ -37,9 +37,7 @@ class ResultAhead(Result):
 
 
 class ExtraCosts(BaseModel):
-    import_markup: float = Field(
-        validation_alias=AliasChoices("import_markup", "markup")
-    )
+    import_markup: float = Field(validation_alias=AliasChoices("import_markup", "markup"))
     import_grid: float = Field(validation_alias=AliasChoices("import_grid", "grid"))
     import_tax: float = Field(validation_alias=AliasChoices("import_tax", "energy_tax"))
 
@@ -111,9 +109,7 @@ def look_ahead(
 
     spot_costs = []
 
-    minimas = find_minimas_lookahead(
-        dataset=spot_prices, minima_lookahead=minima_lookahead
-    )
+    minimas = find_minimas_lookahead(dataset=spot_prices, minima_lookahead=minima_lookahead)
 
     for t, cost in spot_prices.items():
         dt = datetime.fromtimestamp(t).astimezone(tz=TIMEZONE)
@@ -124,9 +120,7 @@ def look_ahead(
             continue
 
         if len(spot_costs) >= avg_window_size:
-            spot_avg = statistics.fmean(
-                spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)]
-            )
+            spot_avg = statistics.fmean(spot_costs[len(spot_costs) - avg_window_size : len(spot_costs)])
             relpt = round((cost / spot_avg - 1) * 100, 1)
             level, level_index = to_level(relpt, cost, levels)
             logger.debug(f"{cost=} {level=} {level_index=}")

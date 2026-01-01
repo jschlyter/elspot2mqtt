@@ -75,12 +75,8 @@ async def async_main():
         help="configuration file",
         required=False,
     )
-    parser.add_argument(
-        "--stdout", dest="stdout", action="store_true", help="Print result"
-    )
-    parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Print debug information"
-    )
+    parser.add_argument("--stdout", dest="stdout", action="store_true", help="Print result")
+    parser.add_argument("--debug", dest="debug", action="store_true", help="Print debug information")
     args = parser.parse_args()
 
     if args.debug:
@@ -117,13 +113,9 @@ async def async_main():
         threshold = charge_config.get("threshold", DEFAULT_CHARGE_THRESHOLD)
 
         t = time.time()
-        prices_next_24h = dict(
-            filter(lambda elem: elem[0] > t and elem[0] < (t + 86400), prices.items())
-        )
+        prices_next_24h = dict(filter(lambda elem: elem[0] > t and elem[0] < (t + 86400), prices.items()))
         try:
-            charge_window = find_charge_window(
-                prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold
-            )
+            charge_window = find_charge_window(prices=prices_next_24h, pm=pm, window=(t1, t2), threshold=threshold)
         except ValueError as exc:
             logger.warning("No charge window possible")
             logger.debug(str(exc))
